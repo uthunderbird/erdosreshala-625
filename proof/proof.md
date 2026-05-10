@@ -21,7 +21,7 @@ to G(n,1/2).
 
 **t-bounded colorings.** A *t-bounded proper coloring* of a graph G is a proper vertex coloring
 (no two adjacent vertices share a color) in which every color class has at most t vertices. For
-this proof, t = ⌊2 log₂ n⌋. The *t-bounded chromatic number* χ_t(G) is the minimum number of
+this proof, t ≈ 2 log₂ n (precisely: `thresholdFloor n − 1` in Lean, where `thresholdFloor n` is the floor of the first-moment independence-number threshold, approximately 2 log₂ n to leading order). The *t-bounded chromatic number* χ_t(G) is the minimum number of
 colors in any t-bounded proper coloring of G. The t-bounded restriction concentrates the coloring
 count enough for the first- and second-moment methods to apply.
 
@@ -69,7 +69,7 @@ E[Z]²/E[Z²] > exp(−n^{0.99}), and Paley–Zygmund then implies P[Z > 0] ≥ 
 which is a positive probability (not yet high probability); (ii) the Azuma–Hoeffding inequality for
 the vertex-exposure martingale of ζ provides concentration: each vertex changes ζ by at most 1
 (Lipschitz constant 1), so P[ζ ≥ E[ζ] + s] ≤ exp(−s²/(2n)); setting s = n^{0.999} gives tail
-probability exp(−n^{0.998}) = o(ε), making 2·n^{0.999} more than sufficient as a concentration
+probability exp(−n^{0.998}/2) = o(ε), making 2·n^{0.999} more than sufficient as a concentration
 error; (iii) the proved theorem `heckel_zeta_upper_bound` (which internally uses
 `heckel_zeta_mean_upper_bound`, itself proved with 0 sorry) closes the 1 − ε bound. χ_t(G) is an intermediate quantity and does not appear in the final Lean statement.
 

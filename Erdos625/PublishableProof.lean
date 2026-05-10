@@ -326,11 +326,17 @@ The RouteD2.lean file (upstream of this file) was audited manually
 to confirm that the proof of `erdos_625` calls `gnHalf_gap_ge_n_pow_one_minus_eps_of_exactNoEmpty`,
 which pulls exactly these 3 paper axioms. No additional sorrys appear on this proof path.
 
-**Non-reachable axioms**: `heckel_zeta_upper_tail` and `heckel_zeta_lower_tail`
-(ZetaConcentration.lean, lines ~1317 and ~1334) are genuine `axiom` declarations in
-ZetaConcentration.lean, but they are NOT on the dependency path of `erdos_625` — they are
-not reachable from it and will not appear in `#print axioms erdos_625`. They refine the axiom
-structure of alternative derivation routes but do not affect the 3-axiom count above.
+**Non-reachable axioms** (7 total — none affect the 3-axiom count above):
+- `PartBProfileBridge.lean`: `profileLogCoreBridgeTarget_source` (legacy Theorem 1 chain);
+  `paperPartBEndpointClosedVectorTailMoment…_source` (alternative Stirling-endpoint route).
+- `ChromaticConnection.lean`: `threshold_tBoundedColoringError_le_with_error`;
+  `kThresholdWitness_le_n_div_threshold`; `threshold_decay_axiom` (all on alternative
+  chromatic lower bound routes not used by `heckel_chromatic_lower_bound_of_exactNoEmpty`).
+- `ZetaConcentration.lean`: `heckel_zeta_upper_tail`; `heckel_zeta_lower_tail` (alternative
+  ζ tail bound routes not used by `heckel_zeta_upper_bound`).
+
+None of these appear in `#print axioms erdos_625`. See `proof/proof.md` §"Lean Formalization"
+for the complete audit trail with per-axiom explanations.
 
 **Non-reachable sorry**: `heckel_zeta_mean_bound_from_upper_tail` (ZetaConcentration.lean)
 contains 1 sorry, but this theorem is NOT called on the proof path of `erdos_625`. It is an
