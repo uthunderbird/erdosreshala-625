@@ -131,10 +131,12 @@ Three axioms in `Erdos625/ChromaticConnection.lean` (`threshold_tBoundedColoring
 lower bound routes that were explored during development. None are reachable from `erdos_625`.
 See [`paper/SOURCES.md`](paper/SOURCES.md) for the complete non-reachable axiom inventory.
 
-Note: `ZetaConcentration.lean` contains one architectural `sorry` in
-`heckel_zeta_mean_bound_from_upper_tail`, which documents an alternative derivation route and is
-**not** on the dependency path of `erdos_625`. Running `grep sorry Erdos625/ZetaConcentration.lean`
-will reveal it; it does not appear in `#print axioms Problem625.Publishable.erdos_625`.
+Two architectural `sorry`s exist in the repository, both off the proof path: one in
+`ChromaticConnection.lean` (`decay_exponent_eventually_le_neg`, a private lemma documenting
+an alternative decay bound approach) and one in `ZetaConcentration.lean`
+(`heckel_zeta_mean_bound_from_upper_tail`, an alternative derivation route). Running
+`lake build` will show warnings for both; neither appears in
+`#print axioms Problem625.Publishable.erdos_625`.
 
 ---
 
@@ -173,8 +175,8 @@ import Erdos625.PublishableProof
 |------|----------|
 | `Erdos625.lean` | Library root — imports `PublishableProof.lean`; entry point for `lake build` |
 | `Erdos625/PublishableProof.lean` | **Start here.** Main theorem `erdos_625` with named steps and citations |
-| `Erdos625/ChromaticConnection.lean` | Part B chain: P[χ(G) ≥ k* − n^{1−0.9ε}] ≥ 1 − ε (0 sorry) |
-| `Erdos625/ZetaConcentration.lean` | Part C chain: Azuma concentration + P[ζ(G) ≤ …] ≥ 1 − ε (0 sorry) |
+| `Erdos625/ChromaticConnection.lean` | Part B chain: P[χ(G) ≥ k* − n^{1−0.9ε}] ≥ 1 − ε (0 sorry on proof path) |
+| `Erdos625/ZetaConcentration.lean` | Part C chain: Azuma concentration + P[ζ(G) ≤ …] ≥ 1 − ε (0 sorry on proof path) |
 | `Erdos625/GapArithmetic.lean` | Gap arithmetic inequality (0 axioms, 0 sorry) |
 | `Erdos625/PartBProfileBridge.lean` | Part B bridge; declares the 2 HP-2023 axioms |
 | `Erdos625/RouteD2.lean` | Intermediate assembly theorem |
@@ -184,7 +186,7 @@ import Erdos625.PublishableProof
 | `Erdos625/BoundedDifferences.lean` | Bounded differences / martingale infrastructure |
 | `Erdos625/IndepMoments.lean` | Independence number moment estimates |
 | `Erdos625/README.md` | Lean source guide with file roles and suggested reading order |
-| `proof/proof.md` | Standalone 148-line mathematical proof document |
+| `proof/proof.md` | Standalone mathematical proof document |
 | `paper/SOURCES.md` | Precise citations for the 3 paper axioms |
 | `DEVELOPMENT.md` | Architectural decision records |
 

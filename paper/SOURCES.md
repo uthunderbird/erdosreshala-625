@@ -43,7 +43,7 @@ uniform measure `gnHalf`.
 
 The following `axiom` declarations exist in the repository but are **not** in the dependency
 closure of `erdos_625` and will not appear in `#print axioms Problem625.Publishable.erdos_625`.
-A reader running `grep "^axiom" Erdos625/*.lean` will find all of these in addition to the
+A reader running `grep "^axiom" Erdos625/*.lean` (from the repository root) will find all of these in addition to the
 3 paper axioms above.
 
 **In `PartBProfileBridge.lean`**:

@@ -123,20 +123,29 @@ To verify the axiom inventory: `#print axioms Problem625.Publishable.erdos_625`.
 
 **Additional axioms (non-reachable from `erdos_625`)**: The following axioms exist in the
 repository but are NOT in the closure of `erdos_625` and will not appear in
-`#print axioms Problem625.Publishable.erdos_625`:
-- `profileLogCoreBridgeTarget_source` (`PartBProfileBridge.lean`) — used only by the legacy
-  Theorem 1 chain (`gnHalf_gap_ge_n_pow_one_minus_eps`), not by `erdos_625`.
-- `heckel_zeta_upper_tail` and `heckel_zeta_lower_tail` (`ZetaConcentration.lean`) — document
-  alternative derivation routes for ζ tail bounds.
-None of these affect the 3-axiom count of `erdos_625`.
+`#print axioms Problem625.Publishable.erdos_625`. See `paper/SOURCES.md` for the complete list
+with detailed explanations.
 
-**Sorry count**: Lean's kernel accepts this proof with no `sorry`. The only admitted terms beyond
-Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`) are the three named
-paper-backed axioms above. Running `#print axioms Problem625.Publishable.erdos_625` will produce
-exactly six entries: the three paper axioms plus `propext`, `Classical.choice`, and `Quot.sound`.
-The proof is classical (uses `Classical.choice`); the existential `∃ n₀` is non-constructive.
+In `PartBProfileBridge.lean`: `profileLogCoreBridgeTarget_source` (legacy Theorem 1 chain only)
+and `paperPartBEndpointClosedVectorTailMoment…_source` (alternative Stirling-endpoint discharge
+route). In `ChromaticConnection.lean`: `threshold_tBoundedColoringError_le_with_error`,
+`kThresholdWitness_le_n_div_threshold`, and `threshold_decay_axiom` (all on alternative chromatic
+lower bound routes; the content of the last is separately proved as a theorem on the main path).
+In `ZetaConcentration.lean`: `heckel_zeta_upper_tail` and `heckel_zeta_lower_tail` (alternative
+ζ tail bound routes). None of these affect the 3-axiom count of `erdos_625`.
+
+**Sorry count**: Lean's kernel accepts this proof with no `sorry` on the proof path. The only
+admitted terms beyond Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`) are
+the three named paper-backed axioms above. Running `#print axioms Problem625.Publishable.erdos_625`
+will produce exactly six entries: the three paper axioms plus `propext`, `Classical.choice`, and
+`Quot.sound`. The proof is classical (uses `Classical.choice`); the existential `∃ n₀` is
+non-constructive. The repository contains two architectural `sorry`s off the proof path
+(`decay_exponent_eventually_le_neg` in `ChromaticConnection.lean` and
+`heckel_zeta_mean_bound_from_upper_tail` in `ZetaConcentration.lean`); both will appear as
+warnings in `lake build` output but do not affect `erdos_625`.
 
 **File roles**:
+- `Erdos625.lean` — library root; imports `PublishableProof.lean`; entry point for `lake build`
 - `PublishableProof.lean` — self-contained human-readable proof of `erdos_625`; imports RouteD2;
   presents the full logical skeleton with named steps and citations
 - `RouteD2.lean` — upstream technical theorem `gnHalf_gap_ge_n_pow_one_minus_eps_of_exactNoEmpty`

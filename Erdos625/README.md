@@ -44,13 +44,13 @@ with explanations.
 | File | Contents |
 |------|----------|
 | `PartBProfileBridge.lean` | Declares the 2 paper axioms from HP-2023; proves the combinatorial bridge to `heckel_chromatic_lower_bound_of_exactNoEmpty` |
-| `ChromaticConnection.lean` | Proves P[χ(G) ≥ k* − n^{1−0.9ε}] ≥ 1 − ε from those axioms; **0 sorry** |
+| `ChromaticConnection.lean` | Proves P[χ(G) ≥ k* − n^{1−0.9ε}] ≥ 1 − ε from those axioms; **0 sorry on proof path** (1 architectural sorry in a private lemma not reachable from `erdos_625`) |
 
 ### Part C — Cochromatic upper bound (1 axiom from Heckel 2024)
 
 | File | Contents |
 |------|----------|
-| `ZetaConcentration.lean` | Declares 1 paper axiom (Proposition 5(b) of Heckel 2024); proves Azuma–Hoeffding concentration and P[ζ(G) ≤ k* − n^{1−ε/2} + 2n^{0.999}] ≥ 1 − ε; **0 sorry** |
+| `ZetaConcentration.lean` | Declares 1 paper axiom (Proposition 5(b) of Heckel 2024); proves Azuma–Hoeffding concentration and P[ζ(G) ≤ k* − n^{1−ε/2} + 2n^{0.999}] ≥ 1 − ε; **0 sorry on proof path** (1 architectural sorry not reachable from `erdos_625`) |
 
 ### Assembly
 
