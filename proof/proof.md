@@ -105,7 +105,7 @@ event, completing the proof.
 
 ## Lean Formalization
 
-**Entry point**: `Erdosreshala/Problem625/PublishableProof.lean`
+**Entry point**: `Erdos625/PublishableProof.lean`
 (`namespace Problem625.Publishable`, theorem `erdos_625`). The file presents the full logical
 skeleton with named intermediate steps (`part_B`, `part_C`, `joint_bound`) and inline citations.
 
@@ -119,7 +119,7 @@ To verify the axiom inventory: `#print axioms Problem625.Publishable.erdos_625`.
 | `paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source` | `PartBProfileBridge.lean` — Part B bridge | HP-2023 arXiv:2306.07253, eq:wert2 |
 | `heckel_cochromatic_second_moment` | `ZetaConcentration.lean` — Part C chain | Heckel 2024 arXiv:2409.17614, Proposition 5(b) |
 
-(File names resolve within the Lean repository at `Erdosreshala/Problem625/`.)
+(File names resolve within the Lean library at `Erdos625/`.)
 
 **Additional axioms (non-reachable from `erdos_625`)**: The following axioms exist in the
 repository but are NOT in the closure of `erdos_625` and will not appear in

@@ -9,7 +9,7 @@ This file is a self-contained, human-readable presentation of the proof.
 It imports the full formalization from the production files and presents
 the logical skeleton in one place, with all steps named and citations given.
 
-**Full proof documentation**: `problems/625/solution/proof.md`
+**Full proof documentation**: `proof/proof.md`
 (see the "Lean Formalization" section for the authoritative axiom audit trail).
 
 ## Axiom Inventory
@@ -18,7 +18,7 @@ This proof rests on exactly **3 paper-backed axioms** (and the standard Lean axi
 propext, Classical.choice, Quot.sound).
 For the full audit trail — including which axioms are reachable from each theorem and
 which are excluded — see the "Lean Formalization" section in
-`problems/625/solution/proof.md`.
+`proof/proof.md`.
 
 | Axiom | Location | Source |
 |-------|----------|--------|
@@ -90,7 +90,7 @@ noncomputable def χLower (ε : ℝ) (n : ℕ) : ℝ :=
 
 /-- The upper bound on ζ(G) from Part C: k*(n) minus n^{1−ε/2} plus 2·n^{0.999}.
     Note: `999 / 1000` is a real literal here (not integer division), corresponding to
-    the exponent `0.999` in the proof writeup (`problems/625/solution/proof.md`). -/
+    the exponent `0.999` in the proof writeup (`proof/proof.md`). -/
 noncomputable def ζUpper (ε : ℝ) (n : ℕ) : ℝ :=
   kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2) + 2 * (n : ℝ) ^ (999 / 1000 : ℝ)
 
@@ -302,9 +302,9 @@ theorem erdos_625 (ε : ℝ) (hε_pos : 0 < ε) (hε_small : ε < 0.001) :
 
 **To reproduce**: run `#print axioms Problem625.Publishable.erdos_625` in a Lean session
 (or `-- #print axioms Problem625.Publishable.erdos_625` in a scratch file importing this module).
-Axiom count verified by build: `lake env lean Erdosreshala/Problem625/PublishableProof.lean`
+Axiom count verified by build: `lake env lean Erdos625/PublishableProof.lean`
 returns exit code 0 with no errors, 2026-05-10. See also "Lean Formalization" in
-`problems/625/solution/proof.md`:
+`proof/proof.md`:
 
 ```
 -- Standard Lean kernel axioms (always present):
@@ -316,7 +316,7 @@ axiom Quot.sound : ∀ {α : Sort u} {r : α → α → Prop} {a b : α}, r a b 
 axiom paperPartBThresholdAverageClassAsymptoticLowerCriterionTarget_source :
     -- Heckel–Panagiotou 2023 (arXiv:2306.07253) Lemma 5 (lemma:averagecolourclass)
 axiom paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source :
-    -- Heckel–Panagiotou 2023 (arXiv:2306.07253) eq:wert / eq:wert2
+    -- Heckel–Panagiotou 2023 (arXiv:2306.07253) eq:wert2
 axiom heckel_cochromatic_second_moment :
     -- Heckel 2024 (arXiv:2409.17614) Proposition 5(b)
 ```

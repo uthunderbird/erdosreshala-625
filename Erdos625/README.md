@@ -20,6 +20,12 @@ proof's dependency closure. This proof produces **6 entries**:
 - `propext`, `Classical.choice`, `Quot.sound` — standard Lean axioms used in all Lean 4
   proofs that reason about equality and existence
 
+Running `grep "^axiom" Erdos625/*.lean` will reveal additional `axiom` declarations (in
+`PartBProfileBridge.lean`, `ChromaticConnection.lean`, and `ZetaConcentration.lean`) that are
+**not** reachable from `erdos_625` — they belong to alternative proof routes and do not appear
+in `#print axioms`. See [`../paper/SOURCES.md`](../paper/SOURCES.md) for the complete list
+with explanations.
+
 ## File roles (in proof order)
 
 ### Definitions and infrastructure

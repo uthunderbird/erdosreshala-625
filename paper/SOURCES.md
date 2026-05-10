@@ -42,9 +42,25 @@ uniform measure `gnHalf`.
 ## Non-reachable axioms (do not affect the 3-axiom count)
 
 The following `axiom` declarations exist in the repository but are **not** in the dependency
-closure of `erdos_625` and will not appear in `#print axioms Problem625.Publishable.erdos_625`:
+closure of `erdos_625` and will not appear in `#print axioms Problem625.Publishable.erdos_625`.
+A reader running `grep "^axiom" Erdos625/*.lean` will find all of these in addition to the
+3 paper axioms above.
 
-- `profileLogCoreBridgeTarget_source` (`PartBProfileBridge.lean`) — used only by the legacy
-  Theorem 1 chain, not by `erdos_625`.
-- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` (`ZetaConcentration.lean`) — alternative
-  derivation routes for ζ tail bounds; not used in the main proof.
+**In `PartBProfileBridge.lean`**:
+- `profileLogCoreBridgeTarget_source` — used only by the legacy Theorem 1 chain
+  (`gnHalf_gap_ge_n_pow_one_minus_eps`); not by `erdos_625`.
+- `paperPartBEndpointClosedVectorTailMomentQBoundedProductProfilePDenomAffineHalfLogSlackSmallClosedUniformAsymptoticNegOneStirlingFactorialUpperSplitAtBotTarget_source` — an alternative
+  Stirling-endpoint discharge route for Part B; not on the dependency path of `erdos_625`.
+
+**In `ChromaticConnection.lean`**:
+- `threshold_tBoundedColoringError_le_with_error` — the direct axiom form of the coloring-error
+  bound; used by alternative chromatic lower bound chains, not by `erdos_625`.
+- `kThresholdWitness_le_n_div_threshold` — a threshold comparison axiom used by alternative
+  route chains (the wired and via-threshold proofs); not by `erdos_625`.
+- `threshold_decay_axiom` — a real-analysis decay axiom used by alternative chains; its
+  content is proved as a theorem (`threshold_decay_axiom_discharge`) and the proved version
+  is what the `erdos_625` chain uses.
+
+**In `ZetaConcentration.lean`**:
+- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — alternative derivation routes for
+  ζ tail bounds; not used in the main proof.
