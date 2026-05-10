@@ -40,7 +40,7 @@ The proof combines three independent components.
 ### The threshold $k^*$
 
 Define $k^* = k^*(n)$ as the *first-moment threshold* for $t$-bounded proper colorings of
-$G(n,1/2)$, where $t = \lfloor 2\log_2 n \rfloor$.  A coloring is *t-bounded* if every color
+$G(n,1/2)$, where $t \approx 2\log_2 n$ (precisely: `thresholdFloor n − 1` in Lean, where `thresholdFloor n` is the floor of the first-moment independence-number threshold).  A coloring is *t-bounded* if every color
 class has at most $t$ vertices.  Specifically, $k^*$ is the smallest $k$ such that the expected
 number of proper $k$-colorings of $G(n,1/2)$ in which every color class has at most $t$ vertices
 falls below 1.  It satisfies $k^* = \Theta(n / \log n)$; more precisely,
@@ -78,7 +78,7 @@ $\lfloor k^* - n^{1-\varepsilon/2} \rfloor$ colors.
 - **Concentration (Azuma–Hoeffding)**: $\zeta(G)$ is 1-Lipschitz under vertex exposure (removing
   one vertex changes $\zeta$ by at most 1), so the Azuma–Hoeffding inequality gives
   $\mathbb{P}[\zeta \ge \mathbb{E}[\zeta] + s] \le e^{-s^2/(2n)}$.  Setting $s = n^{0.999}$
-  makes the tail probability $e^{-n^{0.998}} = o(\varepsilon)$.  The Azuma–Hoeffding
+  makes the tail probability $e^{-n^{0.998}/2} = o(\varepsilon)$.  The Azuma–Hoeffding
   concentration infrastructure is fully formalized with 0 sorry.
 
 ### Gap arithmetic and union bound
