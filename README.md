@@ -147,8 +147,8 @@ an alternative decay bound approach) and one in `ZetaConcentration.lean`
 (downloads the Mathlib compiled cache, ~4 GB).
 
 ```bash
-git clone https://github.com/erdosreshala-625/erdos-625-formalization
-cd erdos-625-formalization
+git clone https://github.com/uthunderbird/erdosreshala-625
+cd erdosreshala-625
 lake exe cache get    # download prebuilt Mathlib oleans (~5 min)
 lake build            # build the formalization (~5 min with cache)
 ```
