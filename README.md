@@ -21,12 +21,11 @@ $$
 where $\chi(G)$ is the chromatic number (minimum proper vertex coloring) and $\zeta(G)$ is the
 cochromatic number (minimum partition of $V(G)$ into cliques and independent sets).
 
-**Main-range condition.** The hypothesis `InMainRange ε n` requires the independence number
-$\alpha(G(n,1/2))$ to satisfy $n^{0.05+\varepsilon} \le \mathbb{E}[\alpha] \le n^{1-\varepsilon}$.
-This restricts to the parameter regime where the proof technique applies; it is an additional
-condition on $n$ beyond bare largeness. For the Erdős–Rényi model,
-$\mathbb{E}[\alpha(G(n,1/2))] \approx 2\log_2 n$, so this condition holds for all sufficiently
-large $n$ when $\varepsilon < 0.001$.
+**Main-range condition.** The condition `InMainRange ε n` is a hypothesis of the Lean theorem,
+not a conclusion. It holds when the expected number of independent sets of size `thresholdFloor n`
+in $G(n,1/2)$ lies in $[n^{0.05+\varepsilon},\, n^{1-\varepsilon}]$. This restricts to $n$ in
+the main range for the first-moment threshold, where the proof technique applies; whether and for
+which $n$ this holds is not proved in this repository.
 
 **Lean entry point**: `Problem625.Publishable.erdos_625` in `Erdos625/PublishableProof.lean`.
 Here `gnHalf n` is the Lean name for the $G(n,1/2)$ probability measure on `SimpleGraph (Fin n)`.
