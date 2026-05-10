@@ -1,0 +1,31 @@
+name: Build Lean Formalization
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean 4
+        uses: leanprover/lean4-action@v1
+        with:
+          lean-version: leanprover/lean4:v4.29.0-rc8
+
+      - name: Get Mathlib cache
+        run: lake exe cache get
+
+      - name: Build
+        run: lake build
+
+      - name: Verify axiom count (informational)
+        run: |
+          lake env lean --run - << 'EOF'
+          import Erdos625.PublishableProof
+          #print axioms Problem625.Publishable.erdos_625
+          EOF
