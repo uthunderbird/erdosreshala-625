@@ -170,6 +170,23 @@ def InMainRange (ε : ℝ) (n : ℕ) : Prop :=
   let μ := expectedIndependentSets n α
   (n : ℝ)^(0.05 + ε) ≤ μ ∧ μ ≤ (n : ℝ)^(1 - ε)
 
+/-- x₀ ≈ 0.02905439 is the unique zero of ϕ(1,x,1) in HP-2023 eq. (7.19)
+    (residual |ϕ(x₀)| = 4.5 × 10⁻¹⁷, machine zero).
+    Determines the exact threshold below which the sub-profile second-moment
+    argument (condition (d) of Lemma 7.20) fails. See proof sketch 2026-05-10.
+
+    The exact Lean rational `0.02905439` matches the certified ϕ-positivity
+    interval `[x₀ + 10⁻⁴, 0.04) = [0.029154, 0.04)` of `lemma_7_10_ext`. -/
+noncomputable def x₀ : ℝ := 0.02905439
+
+/-- Extended main range: lower bound is n^{x₀+ε} instead of n^{0.05+ε}.
+    Covers ~97% of all large n (vs ~95% for InMainRange), extending the
+    range of Theorem 1 by using the tight threshold from HP-2023 eq. (7.19). -/
+def InMainRangeMod (ε : ℝ) (n : ℕ) : Prop :=
+  let α := thresholdFloor n
+  let μ := expectedIndependentSets n α
+  (n : ℝ)^(x₀ + ε) ≤ μ ∧ μ ≤ (n : ℝ)^(1 - ε)
+
 end RandomGraphModel
 
 /-! ## G(n, 1/2) Measure -/

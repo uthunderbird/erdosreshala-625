@@ -30,8 +30,8 @@ This file factors the `heckel_zeta_upper_bound` axiom (formerly in RouteD2.lean)
 4. **Theorem** (this file): `heckel_zeta_upper_bound`
    — fully proved from (1) + (2) + (3). No axiom; 0 sorry for the outer theorem.
 
-**CURRENT STATE (verified 2026-05-10)**: 1 sorry (architectural only, not load-bearing), 1 load-bearing axiom:
-- `heckel_cochromatic_second_moment` (load-bearing axiom, Heckel 2024 Proposition 5(b), used via `heckel_zeta_paley_zygmund`)
+**CURRENT STATE (verified 2026-05-12; updated after the 2026-05-11 narrowing)**: 1 sorry (architectural only, not load-bearing), 1 load-bearing axiom:
+- `heckel_offdiag_term_bound` (load-bearing axiom, Heckel 2024 Proposition 5(b) off-diagonal term; a 2026-05-11 narrowing of the original `heckel_cochromatic_second_moment`, which is now a proved theorem on top of `heckel_offdiag_term_bound`; the proved theorem is what `heckel_zeta_paley_zygmund` consumes)
 - `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` (non-load-bearing axioms; refine the axiom structure but not used in main proof chain)
 - `heckel_zeta_mean_bound_from_upper_tail`: sorry (architectural theorem showing derivation route; NOT used in main proof)
 - `heckel_zeta_mean_upper_bound`: PROVED theorem (0 sorry; proved by contradiction using Paley-Zygmund + Azuma lower tail)
@@ -1389,28 +1389,232 @@ private lemma kCochromaticColoringCount_pos_iff (n k : ℕ) (G : SimpleGraph (Fi
       simp only [Set.mem_setOf_eq] at hv
       exact absurd ⟨col₀ v, hv ▸ rfl⟩ h
 
-/-- **[AXIOM — Heckel second-moment bound]** (Heckel 2024, Proposition 5(b))
+/-- **[Sum-swap identity]** Proof step 0 for `heckel_cochromatic_second_moment`.
 
-  For large n in the main range, with k* = ⌊kThresholdWitness n − n^{1−ε/2}⌋,
-  letting Z G = kCochromaticColoringCount n k* G and |Ω| = number of graphs on Fin n:
-    (∑_G Z G)² > exp(−n^{0.99}) · (∑_G (Z G)²) · |Ω|
+  The second moment ∑_G Z(G)² equals ∑_{C1} ∑_{C2} |{G | C1,C2 ∈ colorings(G)}|
+  via Fubini / sum exchange:
+    ∑_G (|{col | P col G}|)² = ∑_{C1} ∑_{C2} |{G | P C1 G ∧ P C2 G}|
 
-  This encodes E[Z]²/E[Z²] > exp(−n^{0.99}) under the uniform G(n,1/2) distribution:
-    E[Z] = (∑ Z G) / |Ω|, so E[Z]² = (∑ Z G)² / |Ω|²
-    E[Z²] = (∑ Z G²) / |Ω|, so E[Z]²/E[Z²] = (∑ Z G)² / (|Ω| · ∑ Z G²)
+  Proof: push casts to ℕ, then use `Finset.sum_comm` to transpose the
+  G-sum with (C1, C2) after expanding the square as a double sum via
+  `Finset.card_eq_sum_ones` + `Finset.sum_mul` / `Finset.mul_sum`.
+-/
+private lemma sum_kCochromaticColoringCount_sq_eq (n k : ℕ) :
+    ∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n k G) ^ 2 =
+    ∑ C1 : Fin n → Fin k, ∑ C2 : Fin n → Fin k,
+      ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+        IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2) : Finset _).card := by
+  -- Standard Fubini double-counting: ∑_G Z(G)² = ∑_{C1,C2} |{G : C1,C2 ∈ colorings(G)}|.
+  -- Step 1: for each G, expand (|S_G|)² as a double if-sum over colorings.
+  have step1 : ∀ G : SimpleGraph (Fin n),
+      ((Finset.univ (α := Fin n → Fin k)).filter (IsCochromaticColoring G k)).card ^ 2 =
+      ∑ C1 : Fin n → Fin k, ∑ C2 : Fin n → Fin k,
+        if IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2 then 1 else 0 := by
+    intro G
+    simp_rw [Finset.card_eq_sum_ones, Finset.sum_filter, sq, Finset.sum_mul, Finset.mul_sum]
+    congr 1; ext C1; congr 1; ext C2
+    split_ifs <;> simp_all
+  -- Step 2: prove the ℕ version, then cast.
+  have hℕ : ∑ G : SimpleGraph (Fin n),
+      (Fintype.card {col : Fin n → Fin k | IsCochromaticColoring G k col}) ^ 2 =
+      ∑ C1 : Fin n → Fin k, ∑ C2 : Fin n → Fin k,
+        ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+          IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card := by
+    simp only [Fintype.card_subtype]
+    -- Expand (filter...).card^2 pointwise via step1, then swap summation order
+    trans ∑ G : SimpleGraph (Fin n), ∑ C1 : Fin n → Fin k, ∑ C2 : Fin n → Fin k,
+        if IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2 then (1 : ℕ) else 0
+    · apply Finset.sum_congr rfl; intro G _; exact step1 G
+    · -- Fubini: swap G ↔ C1, then G ↔ C2
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl; intro C1 _
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl; intro C2 _
+      -- Goal: ∑ G, if (...) then 1 else 0 = (filter ...).card
+      rw [← Finset.sum_filter, ← Finset.card_eq_sum_ones]
+  simp only [kCochromaticColoringCount]
+  exact_mod_cast hℕ
 
-  Combined with Paley-Zygmund (|{Z>0}| ≥ (∑ Z G)²/(∑ Z G²)), this gives
-    P[ζ ≤ k*] = |{Z>0}| / |Ω| ≥ (∑ Z G)²/(∑ Z G² · |Ω|) > exp(−n^{0.99}).
+/-- The filter `{G | P G ∧ P G}` equals `{G | P G}` via `(P ∧ P) ↔ P`. -/
+private lemma sum_cochromatic_filter_and_self_eq (n k : ℕ) (C : Fin n → Fin k) :
+    ((Finset.univ (α := SimpleGraph (Fin n))).filter
+        (fun G => IsCochromaticColoring G k C ∧ IsCochromaticColoring G k C)).card =
+    ((Finset.univ (α := SimpleGraph (Fin n))).filter
+        (fun G => IsCochromaticColoring G k C)).card := by
+  congr 1
+  apply Finset.filter_congr
+  intro G _
+  exact ⟨And.left, fun h => ⟨h, h⟩⟩
+
+/-- The double coloring sum splits into the diagonal term plus the off-diagonal term (ℕ identity).
+    Diagonal: C1 = C2 contribution; off-diagonal: C1 ≠ C2 (via `Finset.univ.erase`). -/
+private lemma sum_cochromatic_coloring_diag_split_nat (n k : ℕ) :
+    ∑ C1 : Fin n → Fin k, ∑ C2 : Fin n → Fin k,
+      ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+        IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card =
+    (∑ C : Fin n → Fin k,
+      ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+        IsCochromaticColoring G k C)).card) +
+    (∑ C1 : Fin n → Fin k, ∑ C2 ∈ (Finset.univ : Finset (Fin n → Fin k)).erase C1,
+      ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+        IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card) := by
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro C1 _
+  rw [← Finset.add_sum_erase Finset.univ _ (Finset.mem_univ C1)]
+  congr 1
+  exact sum_cochromatic_filter_and_self_eq n k C1
+
+/-- **[Diagonal = First Moment]** The diagonal coloring sum equals the first moment.
+    Proof: Fubini / `Finset.sum_comm` swaps the order of summation over colorings and graphs. -/
+lemma heckel_cochromatic_second_moment_diag_is_first_moment (n k : ℕ) :
+    (∑ C ∈ (Finset.univ : Finset (Fin n → Fin k)),
+      (Fintype.card {G : SimpleGraph (Fin n) // IsCochromaticColoring G k C} : ℝ)) =
+    ∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G := by
+  have hN : ∑ C ∈ (Finset.univ : Finset (Fin n → Fin k)),
+      Fintype.card {G : SimpleGraph (Fin n) // IsCochromaticColoring G k C} =
+      ∑ G : SimpleGraph (Fin n),
+      Fintype.card {C : Fin n → Fin k // IsCochromaticColoring G k C} := by
+    simp only [Fintype.card_subtype]
+    simp_rw [Finset.card_eq_sum_ones, Finset.sum_filter]
+    rw [Finset.sum_comm]
+  simp only [kCochromaticColoringCount]
+  exact_mod_cast hN
+
+/-- **[Diagonal split]** The cochromatic second-moment double sum splits as:
+    `∑_G Z(G)²  =  (∑_G Z(G))  +  off-diagonal term`
+
+  - Diagonal term equals the first moment `∑_G Z(G)` via sum-swap (Fubini);
+    proved in `heckel_cochromatic_second_moment_diag_is_first_moment`.
+  - Off-diagonal term `∑_{C1 ≠ C2} |{G | C1,C2 ∈ colorings(G)}|` is exactly the content
+    bounded by `heckel_cochromatic_second_moment` (Heckel 2024 Prop. 5(b)).
+    Next refinement target: tighten to `heckel_cochromatic_second_moment_offdiag_bound`. -/
+theorem heckel_cochromatic_second_moment_diag_split (n k : ℕ) :
+    ∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n k G) ^ 2 =
+    (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) +
+    (∑ C1 : Fin n → Fin k, ∑ C2 ∈ (Finset.univ : Finset (Fin n → Fin k)).erase C1,
+      ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+        IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card : ℝ) := by
+  have h_old : ∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n k G) ^ 2 =
+      (∑ C : Fin n → Fin k,
+        ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+          IsCochromaticColoring G k C)).card : ℝ) +
+      (∑ C1 : Fin n → Fin k, ∑ C2 ∈ (Finset.univ : Finset (Fin n → Fin k)).erase C1,
+        ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+          IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card : ℝ) := by
+    rw [sum_kCochromaticColoringCount_sq_eq]
+    exact_mod_cast sum_cochromatic_coloring_diag_split_nat n k
+  rw [h_old]
+  congr 1
+  rw [← heckel_cochromatic_second_moment_diag_is_first_moment]
+  simp only [Fintype.card_subtype]
+
+/-- **[Off-diagonal term]** The named off-diagonal coloring double sum in the cochromatic
+    second-moment split.  This is the remainder in `heckel_cochromatic_second_moment_diag_split`:
+    `∑_G Z(G)² = ∑_G Z(G) + heckel_cochromatic_second_moment_offdiag_term n k`. -/
+noncomputable def heckel_cochromatic_second_moment_offdiag_term (n k : ℕ) : ℝ :=
+  ∑ C1 : Fin n → Fin k, ∑ C2 ∈ (Finset.univ : Finset (Fin n → Fin k)).erase C1,
+    ((Finset.univ (α := SimpleGraph (Fin n))).filter (fun G =>
+      IsCochromaticColoring G k C1 ∧ IsCochromaticColoring G k C2)).card
+
+/-- The off-diagonal term is nonneg (finite sum of cast nonneg terms). -/
+lemma heckel_cochromatic_second_moment_offdiag_term_nonneg (n k : ℕ) :
+    0 ≤ heckel_cochromatic_second_moment_offdiag_term n k :=
+  Finset.sum_nonneg fun _ _ =>
+    Finset.sum_nonneg fun _ _ => Nat.cast_nonneg _
+
+/-- Diagonal-split restated using the named offdiag term. -/
+lemma heckel_cochromatic_second_moment_diag_split_offdiag (n k : ℕ) :
+    ∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n k G) ^ 2 =
+    (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) +
+    heckel_cochromatic_second_moment_offdiag_term n k :=
+  heckel_cochromatic_second_moment_diag_split n k
+
+/-- **[AXIOM — Heckel off-diagonal bound]** (Heckel 2024, Proposition 5(b), off-diagonal part)
+
+  The off-diagonal contribution to the second moment satisfies:
+    exp(−n^{0.99}) · offdiag_term · |Ω| < (∑Z)² − exp(−n^{0.99}) · ∑Z · |Ω|
+
+  This is the targeted crystallization of Heckel Prop 5(b): the off-diagonal coloring-pair
+  count is small enough that the second-moment ratio E[Z]²/E[Z²] > exp(−n^{0.99}).
+
+  Together with `heckel_cochromatic_second_moment_diag_split_offdiag` (∑Z² = ∑Z + offdiag),
+  this implies `heckel_cochromatic_second_moment` by a purely algebraic bridge.
 
   Source: Heckel (2024), arXiv:2409.17614, Proposition 5(b).
 -/
-axiom heckel_cochromatic_second_moment (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
+axiom heckel_offdiag_term_bound (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n → 0 < n →
+      let k := ⌊kThresholdWitness n - (n : ℝ)^(1 - ε / 2)⌋₊
+      Real.exp (-(n : ℝ)^(99 / 100 : ℝ)) *
+        heckel_cochromatic_second_moment_offdiag_term n k *
+        (Fintype.card (SimpleGraph (Fin n)) : ℝ) <
+        (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) ^ 2 -
+        Real.exp (-(n : ℝ)^(99 / 100 : ℝ)) *
+          (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) *
+          (Fintype.card (SimpleGraph (Fin n)) : ℝ)
+
+/-- **[Heckel second-moment bound]** (Heckel 2024, Proposition 5(b))
+
+  Proved from `heckel_offdiag_term_bound` + `heckel_cochromatic_second_moment_diag_split_offdiag`
+  via the algebraic bridge:
+    exp · (∑Z + offdiag) · |Ω|  =  exp · ∑Z · |Ω|  +  exp · offdiag · |Ω|
+                                 <  exp · ∑Z · |Ω|  +  ((∑Z)² − exp · ∑Z · |Ω|)
+                                 =  (∑Z)²
+
+  **Axiom count**: 0 (proved theorem; mathematical content in `heckel_offdiag_term_bound`)
+  **Sorry count**: 0
+-/
+theorem heckel_cochromatic_second_moment (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n → 0 < n →
       let k := ⌊kThresholdWitness n - (n : ℝ)^(1 - ε / 2)⌋₊
       Real.exp (-(n : ℝ)^(99 / 100 : ℝ)) *
         (∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n k G) ^ 2) *
         (Fintype.card (SimpleGraph (Fin n)) : ℝ) <
-        (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) ^ 2
+        (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) ^ 2 := by
+  obtain ⟨n₀, hn₀⟩ := heckel_offdiag_term_bound ε hε_pos hε_lt
+  refine ⟨n₀, fun n hn hrange hn_pos => ?_⟩
+  specialize hn₀ n hn hrange hn_pos
+  simp only at hn₀ ⊢
+  -- Rewrite ∑Z² = ∑Z + offdiag_term
+  rw [heckel_cochromatic_second_moment_diag_split_offdiag]
+  -- Goal: exp * (∑Z + offdiag) * |Ω| < (∑Z)²
+  -- hn₀: exp * offdiag * |Ω| < (∑Z)² − exp * ∑Z * |Ω|
+  set e := Real.exp (-(n : ℝ) ^ (99 / 100 : ℝ))
+  set Z := ∑ G : SimpleGraph (Fin n),
+    kCochromaticColoringCount n ⌊kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2)⌋₊ G
+  set od := heckel_cochromatic_second_moment_offdiag_term n
+    ⌊kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2)⌋₊
+  set Ω := (Fintype.card (SimpleGraph (Fin n)) : ℝ)
+  have hexpand : e * (Z + od) * Ω = e * Z * Ω + e * od * Ω := by ring
+  linarith
+
+/-- **[Offdiag-axiom bridge]** The Heckel second-moment axiom, rewritten in terms of the named
+    offdiag term: for large n in the main range, the axiom boundary
+    `exp(−n^{0.99}) · (first_moment + offdiag_term) · |Ω| < first_moment²`
+    holds. This connects `heckel_cochromatic_second_moment_offdiag_term` to the axiom
+    `heckel_cochromatic_second_moment` explicitly. -/
+lemma heckel_cochromatic_second_moment_offdiag_bound (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n → 0 < n →
+      let k := ⌊kThresholdWitness n - (n : ℝ)^(1 - ε / 2)⌋₊
+      Real.exp (-(n : ℝ)^(99 / 100 : ℝ)) *
+        ((∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) +
+         heckel_cochromatic_second_moment_offdiag_term n k) *
+        (Fintype.card (SimpleGraph (Fin n)) : ℝ) <
+        (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n k G) ^ 2 := by
+  obtain ⟨n₀, hn₀⟩ := heckel_cochromatic_second_moment ε hε_pos hε_lt
+  refine ⟨n₀, fun n hn hrange hn_pos => ?_⟩
+  specialize hn₀ n hn hrange hn_pos
+  have heq : ∑ G : SimpleGraph (Fin n), (kCochromaticColoringCount n
+      ⌊kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2)⌋₊ G) ^ 2 =
+      (∑ G : SimpleGraph (Fin n), kCochromaticColoringCount n
+        ⌊kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2)⌋₊ G) +
+      heckel_cochromatic_second_moment_offdiag_term n
+        ⌊kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2)⌋₊ :=
+    heckel_cochromatic_second_moment_diag_split_offdiag n _
+  simp only []
+  rw [← heq]
+  exact hn₀
 
 /-- **[THEOREM — ζ Paley-Zygmund lower bound]** (proved from Paley-Zygmund + Heckel second-moment)
 

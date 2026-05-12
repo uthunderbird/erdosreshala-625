@@ -1,66 +1,173 @@
-# Paper Sources for the 3 Axioms
+# Paper Sources for the Paper-Backed Axioms
 
-This file records the precise paper citations for the three admitted axioms in the
-formalization of Erdős Problem 625.
+This file records the precise paper citations for the paper-backed axioms in
+the formalization of Erdős Problem 625, separated by which theorem they
+appear in.
 
-## Axiom 1 — Part B average-class lower criterion
+## Flagship `erdos_625_full_clean` — 4 paper axioms
 
-**Lean name**: `paperPartBThresholdAverageClassAsymptoticLowerCriterionTarget_source`
-**File**: `Erdos625/PartBProfileBridge.lean`
+Running `#print axioms Problem625.Publishable.erdos_625_full_clean` returns:
 
-**Paper**: Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame colourings*.
-arXiv:2306.07253.
+1. `Problem625.Publishable.lemma_7_20_modified` — see Axiom A1 below.
+2. `Problem625.partB_alphaMinusTwo_firstMomentBelowOne_source` — see A2.
+3. `Problem625.chi_alphaMinusTwo_lower_bound_whp` — see A3.
+4. `Problem625.zeta_alphaMinusTwo_upper_bound_whp` — see A4.
 
-**Source**: Lemma 5 (LaTeX cross-reference: `lemma:averagecolourclass`) and the associated
-equation `eq:wert`. This controls the leading-order behavior of the expected t-bounded coloring
-count near the first-moment threshold k*.
+Plus the three Lean kernel axioms: `propext`, `Classical.choice`, `Quot.sound`.
 
-## Axiom 2 — Part B decay control
+### A1. `lemma_7_20_modified` (hybrid)
 
-**Lean name**: `paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source`
-**File**: `Erdos625/PartBProfileBridge.lean`
+**Lean name**: `Problem625.Publishable.lemma_7_20_modified`
+**File**: `Erdos625/PublishableProof.lean:399` (line numbers as of 2026-05-12; may drift with future edits — locate by `grep -n '^axiom lemma_7_20_modified'`)
 
-**Paper**: Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame colourings*.
-arXiv:2306.07253.
+**Sources**:
+- Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame
+  colourings*. arXiv:2306.07253. §7, Lemma 7.20, with condition (d)
+  weakened from $\mu_\alpha \ge n^{1.05}$ to $\mu_\alpha \ge n^{x_0+\varepsilon}$
+  where $x_0 \approx 0.02905$.
+- Heckel, A. (2024). *The difference between the chromatic and the
+  cochromatic number of a random graph*. arXiv:2409.17614. §Discussion
+  explicitly conjectures the weakening above.
+- Numerical certificate `lemma_7_10_ext`: in-repository Lipschitz envelope
+  on a 1086-cell grid filling the $\varphi$-positivity gap
+  $[x_0+\varepsilon, 0.04)$ outside HP-2023 Lemma 7.10's coverage. See
+  [`../proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md`](../proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md)
+  and [`../proof/red-team/lemma_7_10_ext.md`](../proof/red-team/lemma_7_10_ext.md).
 
-**Source**: Equation `eq:wert2`. This controls the sub-leading decay factor needed to establish
-the chromatic lower bound at the threshold with the stated probability 1 − ε.
+**Status**: HYBRID. Combines a peer-reviewed paper claim with our own
+(not peer-reviewed) numerical certificate. Disclosed in the Lean
+docstring and in the dedicated audit note.
 
-## Axiom 3 — Part C second-moment bound
+**Proposal authorship**: LLM agent (structurally proposed from
+Heckel 2024 §Discussion's explicit conjecture); numerical
+certificate script also LLM-authored. Human supervisor approved the
+citation boundary. See `../DEVELOPMENT.md` ADR-11.
 
-**Lean name**: `heckel_cochromatic_second_moment`
-**File**: `Erdos625/ZetaConcentration.lean`
+### A2. `partB_alphaMinusTwo_firstMomentBelowOne_source`
 
-**Paper**: Heckel, A. (2024). *The difference between the chromatic and the cochromatic number
-of a random graph*. arXiv:2409.17614.
+**Lean name**: `Problem625.partB_alphaMinusTwo_firstMomentBelowOne_source`
+**File**: `Erdos625/PartBAlphaMinusTwoFirstMomentAxiom.lean:50` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom partB_alphaMinusTwo_firstMomentBelowOne_source'`)
 
-**Source**: Proposition 5(b). The bound is E[Z]²/E[Z²] > exp(−n^{0.99}), where Z counts
-cochromatic colorings of G(n,1/2) with at most ⌊k* − n^{1−ε/2}⌋ colors. In Lean, this is
-formalized in sum form as `exp(−n^{0.99}) · (∑_G Z(G)²) · |Ω| < (∑_G Z(G))²` under the
-uniform measure `gnHalf`.
+**Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, proof of
+Lemma 8.1, first-moment input paragraph ("by the definition of the first
+moment threshold, $E_{n, k_a-1, a} < 1$"), instantiated at level
+$\alpha-2$ over a window of width $\lceil n / \log^2 n \rceil$ above
+`kThresholdAlphaMinusOne n` (i.e. $\mathbf{k}_{\alpha-1}(n)$).
 
-## Non-reachable axioms (do not affect the 3-axiom count)
+**Status**: literal paper citation, narrower than the original threshold-gap
+conclusion (cites only the first-moment computation paragraph, not the
+full Lemma 8.1 application).
 
-The following `axiom` declarations exist in the repository but are **not** in the dependency
-closure of `erdos_625` and will not appear in `#print axioms Problem625.Publishable.erdos_625`.
-A reader running `grep "^axiom" Erdos625/*.lean` (from the repository root) will find all of these in addition to the
-3 paper axioms above.
+**Proposal authorship**: LLM agent (narrowing of a prior wider axiom
+`KThresholdGapSource`). Human supervisor approved the narrower
+citation boundary. See `../DEVELOPMENT.md` ADR-11.
+
+### A3. `chi_alphaMinusTwo_lower_bound_whp`
+
+**Lean name**: `Problem625.chi_alphaMinusTwo_lower_bound_whp`
+**File**: `Erdos625/CrossingPartB.lean:263` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
+
+**Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, Lemma 8.1
+($\chi_a \ge \mathbf{k}_a - 1$ whp for $a \in \{\alpha-1, \alpha-2\}$),
+applied at $a = \alpha-2$, plus the standard Markov-style X-class
+removal argument
+($\chi(G) \ge \chi_{\alpha-2}(G) - X_\alpha - X_{\alpha-1}$, with both
+correction terms negligible in the crossing regime). Slack $n^{0.99}$
+absorbs both the constant-$1$ slack of Lemma 8.1 and the Azuma-Hoeffding
+deviation of $\chi_a$.
+
+**Status**: literal paper citation + standard derivation.
+
+**Proposal authorship**: LLM agent, after a human-supervisor-flagged
+sign-error correction on an initial attempt. Final statement is
+LLM-authored. See `../DEVELOPMENT.md` ADR-11.
+
+### A4. `zeta_alphaMinusTwo_upper_bound_whp` (extrapolation)
+
+**Lean name**: `Problem625.zeta_alphaMinusTwo_upper_bound_whp`
+**File**: `Erdos625/CrossingPartB.lean:311` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
+
+**Source**: Heckel (2024), arXiv:2409.17614, Proposition 5(b) +
+Azuma–Hoeffding, **adapted from $(\alpha-1)$-bounded to
+$(\alpha-2)$-bounded cocolorings**. Heckel 2024 explicitly restricts
+its tame-profile and second-moment construction to $\alpha-1$ (§3
+line 341, §5.1 line 529); the $\alpha-2$ version is the natural
+symmetric move via HP-2023's second-moment lemmas (stated for general
+$a$-bounded profiles in HP-2023 §6.3–6.5).
+
+**Status**: $\alpha-2$ EXTRAPOLATION of a published $\alpha-1$ result;
+not a literal one-citation paper axiom. Detailed transfer audit in
+[`../proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md`](../proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md).
+
+**Proposal authorship**: LLM agent. The $\alpha-1 \to \alpha-2$
+extrapolation framing emerged from an internal swarm session
+moderated by the human supervisor and was then refined by the LLM
+agent. Decision to admit the extrapolation as an axiom (rather
+than block on a literal $\alpha-2$ peer-reviewed citation) was
+approved by the human supervisor. See `../DEVELOPMENT.md` ADR-11.
+
+## Legacy `erdos_625` and `erdos_625_97`
+
+These supporting theorems use a different subset of axioms.
+
+### `erdos_625` (95% n) — 3 paper axioms
+
+`#print axioms Problem625.Publishable.erdos_625` returns:
+
+1. `Problem625.paperPartBThresholdAverageClassAsymptoticLowerCriterionTarget_source` — HP-2023 Lemma 5 (`lemma:averagecolourclass`) + eq:wert.
+2. `Problem625.paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source` — HP-2023 eq:wert2.
+3. `Problem625.heckel_offdiag_term_bound` — Heckel 2024 Prop 5(b)
+   off-diagonal term (a 2026-05-11 narrowing of the original
+   `heckel_cochromatic_second_moment`, which is now a proved theorem on
+   top of `heckel_offdiag_term_bound`).
+
+Plus `propext`, `Classical.choice`, `Quot.sound`.
+
+These three are **not** in the closure of `erdos_625_full_clean` because
+the flagship's good case goes through `erdos_625_97` (which uses axiom A1
+instead).
+
+### `erdos_625_97` (97% n) — 1 paper axiom
+
+`#print axioms Problem625.Publishable.erdos_625_97` returns:
+
+1. `Problem625.Publishable.lemma_7_20_modified` (= A1 above).
+
+Plus the three kernel axioms.
+
+## Non-reachable axioms (do not affect any `#print axioms` count)
+
+`grep "^axiom" Erdos625/*.lean` shows additional `axiom` declarations
+that exist in the repository but are **not** in the dependency closure
+of `erdos_625_full_clean`, `erdos_625`, or `erdos_625_97`. They belong
+to alternative proof routes explored during development:
 
 **In `PartBProfileBridge.lean`**:
-- `profileLogCoreBridgeTarget_source` — used only by the legacy Theorem 1 chain
-  (`gnHalf_gap_ge_n_pow_one_minus_eps`); not by `erdos_625`.
-- `paperPartBEndpointClosedVectorTailMomentQBoundedProductProfilePDenomAffineHalfLogSlackSmallClosedUniformAsymptoticNegOneStirlingFactorialUpperSplitAtBotTarget_source` — an alternative
-  Stirling-endpoint discharge route for Part B; not on the dependency path of `erdos_625`.
+- `profileLogCoreBridgeTarget_source` — used only by the legacy
+  Theorem 1 chain (`gnHalf_gap_ge_n_pow_one_minus_eps`); not by any
+  publishable theorem.
+- `paperPartBEndpointClosedVectorTailMomentQBoundedProductProfilePDenomAffineHalfLogSlackSmallClosedUniformAsymptoticNegOneStirlingFactorialUpperSplitAtBotTarget_source`
+  — alternative Stirling-endpoint discharge route for Part B; not on
+  the publishable path.
 
 **In `ChromaticConnection.lean`**:
-- `threshold_tBoundedColoringError_le_with_error` — the direct axiom form of the coloring-error
-  bound; used by alternative chromatic lower bound chains, not by `erdos_625`.
-- `kThresholdWitness_le_n_div_threshold` — a threshold comparison axiom used by alternative
-  route chains (the wired and via-threshold proofs); not by `erdos_625`.
-- `threshold_decay_axiom` — a real-analysis decay axiom used by alternative chains; its
-  content is proved as a theorem (`threshold_decay_axiom_discharge`) and the proved version
-  is what the `erdos_625` chain uses.
+- `threshold_tBoundedColoringError_le_with_error` — direct axiom form
+  of the coloring-error bound; used by alternative chromatic chains.
+- `kThresholdWitness_le_n_div_threshold` — alternative threshold
+  comparison.
+- `threshold_decay_axiom` — proved as a theorem
+  (`threshold_decay_axiom_discharge`) and the proved version is what
+  the publishable chain uses.
 
 **In `ZetaConcentration.lean`**:
-- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — alternative derivation routes for
-  ζ tail bounds; not used in the main proof.
+- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — alternative
+  $\zeta$ tail bound derivations; not used.
+
+## Disclosure summary
+
+- 2 of the 4 paper axioms in the flagship are HYBRID (A1) or
+  EXTRAPOLATION (A4) of published results, not literal one-citation
+  facts. Both are explicitly disclosed.
+- The other 2 paper axioms (A2, A3) are literal HP-2023 citations.
+- See [`../proof/red-team/`](../proof/red-team/) for five independent
+  red-team passes verifying the disclosure framing.

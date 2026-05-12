@@ -2676,13 +2676,13 @@ theorem heckel_chi_threshold_lower_bound_with_error_of_paperLowerProbability
         firstMomentThreshold n (thresholdFloor n - 1) hαm1_pos ≤
           classBoundedChromaticNumber n (thresholdFloor n - 1) G + 1 := by
       exact_mod_cast hle_add_real
-    simpa [partBErrorColorCount, partBThresholdWitness, partBThresholdLevel, ht_eq, hfmt_eq]
+    simpa [partBErrorColorCount, kThresholdAlphaMinusOne, partBThresholdLevel, ht_eq, hfmt_eq]
       using (Nat.sub_le_iff_le_add).2 hle_add
   · intro h
     have hnat :
         firstMomentThreshold n (thresholdFloor n - 1) hαm1_pos - 1 ≤
           classBoundedChromaticNumber n (thresholdFloor n - 1) G := by
-      simpa [partBErrorColorCount, partBThresholdWitness, partBThresholdLevel, ht_eq, hfmt_eq]
+      simpa [partBErrorColorCount, kThresholdAlphaMinusOne, partBThresholdLevel, ht_eq, hfmt_eq]
         using h
     have hle_add :
         firstMomentThreshold n (thresholdFloor n - 1) hαm1_pos ≤

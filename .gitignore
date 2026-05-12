@@ -1,0 +1,15 @@
+.DS_Store
+
+# Lean / Lake build outputs and caches
+.lake/
+build/
+
+# Local runtime / editor artifacts
+.operator/
+operator-history.jsonl
+*.tmp
+*.trace
+
+# Python helper caches
+__pycache__/
+.pytest_cache/

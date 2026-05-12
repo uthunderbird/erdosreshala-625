@@ -27,5 +27,12 @@ jobs:
         run: |
           lake env lean --run - << 'EOF'
           import Erdos625.PublishableProof
+          #check Problem625.Publishable.erdos_625
+          #check Problem625.Publishable.erdos_625_97
+          #check Problem625.Publishable.erdos_625_full
+          #check Problem625.Publishable.erdos_625_full_clean
           #print axioms Problem625.Publishable.erdos_625
+          #print axioms Problem625.Publishable.erdos_625_97
+          #print axioms Problem625.Publishable.erdos_625_full
+          #print axioms Problem625.Publishable.erdos_625_full_clean
           EOF

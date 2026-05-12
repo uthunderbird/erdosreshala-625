@@ -1,205 +1,319 @@
 # Erdős Problem 625 — Lean 4 Formalization
 
-A machine-checked proof that in the Erdős–Rényi random graph $G(n,1/2)$, the chromatic number
-and the cochromatic number are separated by at least $n^{1-\varepsilon}$ with high probability.
+A Lean 4 machine-checked proof that in the Erdős–Rényi random graph
+$G(n,1/2)$, for every $\varepsilon \in (0, 0.001)$ and all sufficiently
+large $n$,
+$\Pr[\chi(G) - \zeta(G) \ge n^{1-2\varepsilon}] \ge 1 - 2\varepsilon$.
 
-**Proof status**: Complete. **3 paper-backed axioms, 0 sorry on the `erdos_625` proof path.**
+**Caveats at a glance:** this is an LLM-agent-generated formalization
+(Anthropic Claude Opus 4.7, 1M-context); it admits **4 paper-backed
+axioms** (2 literal HP-2023 citations + 1 HP-2023 hybrid + 1 Heckel-2024
+extrapolation); it proves the **in-probability** form only (not
+almost-sure); the five internal red-team passes were run by the same
+LLM-agent pipeline and are not third-party reviews; this work does
+**not** claim the Erdős \$100 prize. See [Caveats](#caveats) for the
+full disclosures.
 
-> **Note**: This README uses GitHub-flavored LaTeX math rendering (requires a modern browser on github.com).
+## Quick links
+
+- [Flagship theorem](#flagship-theorem) — the per-ε bound
+- [Four theorems (coverage hierarchy)](#four-theorems-coverage-hierarchy)
+- [Axiom inventory](#axiom-inventory) — the 7 entries (4 paper + 3 kernel)
+- [How to verify](#building-and-verifying) — `lake exe cache get` + `lake build`
+- [Caveats](#caveats) — prize, LLM provenance, hybrid axioms, scope
+- [References](#references)
+- [Red-team audit trail](proof/red-team/README.md)
+
+**Proof status**: complete on the in-probability form.
+`#print axioms Problem625.Publishable.erdos_625_full_clean` returns
+exactly **7 entries** (4 paper-backed + 3 Lean kernel) and **0
+`sorryAx`** on the proof path of `erdos_625_full_clean`. Five internal
+adversarial-audit passes (same LLM-agent pipeline; see
+`proof/red-team/`); all concluded *no P0 found* in their respective
+rounds.[^sorrynote]
+
+[^sorrynote]: A grep of the Lean tree shows seven literal `sorry`
+tokens in `private` helper lemmas: 5 in `PartBProfileBridge.lean`, 1 in
+`ChromaticConnection.lean` (`decay_exponent_eventually_le_neg`,
+documented in `ROADMAP.md` as off-path), and 1 in
+`ZetaConcentration.lean` (the file's own header at line ~33 calls it
+"architectural only, not load-bearing"). **None** is reachable from
+`erdos_625_full_clean`; the seven-entry axiom inventory above is the
+machine-checked statement of this. The legacy `erdos_625` (95%) and
+`erdos_625_97` (97%) theorems are likewise unaffected.
 
 ---
 
-## Theorem
+## Flagship theorem
 
-For every real $\varepsilon$ with $0 < \varepsilon < 0.001$, there exists $n_0$ such that for all
-$n \ge n_0$ satisfying the main-range condition,
+`Problem625.Publishable.erdos_625_full_clean` in
+`Erdos625/PublishableProof.lean`:
+
+For every real $\varepsilon$ with $0 < \varepsilon < 0.001$, there exists
+$n_0$ such that for all $n \ge n_0$ (with **no** `InMainRange`
+hypothesis),
 
 $$
-\mathbb{P}_{G \sim G(n,1/2)}\!\left[\,\chi(G) - \zeta(G) \ge n^{1-\varepsilon}\,\right] \ge 1 - 2\varepsilon
+\mathbb{P}_{G \sim G(n,1/2)}\!\left[\,\chi(G) - \zeta(G) \ge n^{1-2\varepsilon}\,\right] \ge 1 - 2\varepsilon.
 $$
 
-where $\chi(G)$ is the chromatic number (minimum proper vertex coloring) and $\zeta(G)$ is the
-cochromatic number (minimum partition of $V(G)$ into cliques and independent sets).
-
-**Main-range condition.** The condition `InMainRange ε n` is a hypothesis of the Lean theorem,
-not a conclusion. It holds when the expected number of independent sets of size `thresholdFloor n`
-in $G(n,1/2)$ lies in $[n^{0.05+\varepsilon},\, n^{1-\varepsilon}]$. This restricts to $n$ in
-the main range for the first-moment threshold, where the proof technique applies; whether and for
-which $n$ this holds is not proved in this repository.
-
-**Lean entry point**: `Problem625.Publishable.erdos_625` in `Erdos625/PublishableProof.lean`.
-Here `gnHalf n` is the Lean name for the $G(n,1/2)$ probability measure on `SimpleGraph (Fin n)`.
+The Lean theorem is the **per-$\varepsilon$ quantitative bound**
+above. As a corollary (in $\varepsilon$, by letting $\varepsilon \to 0$;
+**not itself formalized** in Lean),
+$\chi(G) - \zeta(G) \to \infty$ in probability — positively answering
+the **in-probability** form of the Erdős–Gimbel question
+([erdosproblems.com/625](https://www.erdosproblems.com/625)). The
+Erdős–Gimbel question literally asks for almost-sure convergence; that
+upgrade requires a Borel–Cantelli / diagonal-subsequence argument that
+is **not** a one-line application of Borel–Cantelli 1 (with
+$\varepsilon_n = 1/\log n$ the series $\sum 2/\log n$ diverges, so a
+subsequence-plus-monotonicity or coupling argument is needed) and is
+**not yet** in the Lean chain. See `proof/proof.md` and `ROADMAP.md`
+§N1 for the full scope discussion.
 
 ---
 
-## High-level proof idea
+## Four theorems (coverage hierarchy)
 
-The proof combines three independent components.
+| Theorem | Hypothesis | Bound | Coverage |
+|---|---|---|---|
+| `erdos_625` | `InMainRange ε n` | $\chi-\zeta \ge n^{1-\varepsilon}$ | $\sim 95\%$ of $n$ |
+| `erdos_625_97` | `InMainRangeMod ε n` | $\chi-\zeta \ge n^{1-\varepsilon}$ | $\sim 97\%$ of $n$ |
+| `erdos_625_full` | (none) | $\chi-\zeta \ge n^{1-\varepsilon} - 2n^{0.99}$ | $100\%$ |
+| **`erdos_625_full_clean`** ⭐ | **(none)** | $\boldsymbol{\chi-\zeta \ge n^{1-2\varepsilon}}$ | $\boldsymbol{100\%}$ |
 
-### The threshold $k^*$
-
-Define $k^* = k^*(n)$ as the *first-moment threshold* for $t$-bounded proper colorings of
-$G(n,1/2)$, where $t \approx 2\log_2 n$ (precisely: `thresholdFloor n − 1` in Lean, where `thresholdFloor n` is the floor of the first-moment independence-number threshold).  A coloring is *t-bounded* if every color
-class has at most $t$ vertices.  Specifically, $k^*$ is the smallest $k$ such that the expected
-number of proper $k$-colorings of $G(n,1/2)$ in which every color class has at most $t$ vertices
-falls below 1.  It satisfies $k^* = \Theta(n / \log n)$; more precisely,
-$n / k^*(n) \to 2\log_2 n$ as $n \to \infty$.  Both the chromatic and cochromatic bounds are
-stated as deviations from this common threshold.
-
-### Part B — Chromatic lower bound (first-moment method)
-
-**Claim**: $\mathbb{P}[\chi(G) \ge k^* - n^{1-0.9\varepsilon}] \ge 1 - \varepsilon$.
-
-By the first-moment method: if the expected count of $t$-bounded proper $k$-colorings is less
-than 1, then with positive probability no such coloring exists, so the $t$-bounded chromatic number
-$\chi_t(G) > k^*$ up to an additive slack.  The connection to $\chi(G)$ uses the inequality
-$\chi_t(G) \le \chi(G) + X_\alpha$, where $X_\alpha$ counts maximum independent sets; rearranging
-gives $\chi(G) \ge \chi_t(G) - X_\alpha$, and $X_\alpha$ is negligible with high probability in
-the main range.  The quantitative slack $n^{1-0.9\varepsilon}$ and the probability bound $1-\varepsilon$
-do not follow from the bare first-moment inequality alone; they come from asymptotic estimates on the
-expected coloring count near the threshold established in Heckel–Panagiotou (2023).  These estimates
-(Lemma 5 / eq:wert and eq:wert2 of that paper) are the two paper-backed axioms for Part B.
-
-### Part C — Cochromatic upper bound (second-moment method + concentration)
-
-**Claim**: $\mathbb{P}[\zeta(G) \le k^* - n^{1-\varepsilon/2} + 2\cdot n^{0.999}] \ge 1 - \varepsilon$.
-
-Because every proper coloring is also a cochromatic coloring (each color class is an independent
-set), we have $\zeta(G) \le \chi(G)$.  To obtain an upper bound on $\zeta(G)$ strictly below $k^*$,
-the argument uses the random variable $Z$ = number of cochromatic colorings with at most
-$\lfloor k^* - n^{1-\varepsilon/2} \rfloor$ colors.
-
-- **Existence (Paley–Zygmund)**: Proposition 5(b) of Heckel (2024) supplies a second-moment bound
-  $\mathbb{E}[Z]^2 / \mathbb{E}[Z^2] > e^{-n^{0.99}}$; the Paley–Zygmund inequality then gives
-  $\mathbb{P}[Z > 0] > e^{-n^{0.99}} > 0$, so there is a positive probability of finding such a
-  coloring.  This second-moment bound is the single paper-backed axiom for Part C.
-
-- **Concentration (Azuma–Hoeffding)**: $\zeta(G)$ is 1-Lipschitz under vertex exposure (removing
-  one vertex changes $\zeta$ by at most 1), so the Azuma–Hoeffding inequality gives
-  $\mathbb{P}[\zeta \ge \mathbb{E}[\zeta] + s] \le e^{-s^2/(2n)}$.  Setting $s = n^{0.999}$
-  makes the tail probability $e^{-n^{0.998}/2} = o(\varepsilon)$.  The Azuma–Hoeffding
-  concentration infrastructure is fully formalized with 0 sorry.
-
-### Gap arithmetic and union bound
-
-The exponents are chosen so that for every $\varepsilon < 0.001$ and all large $n$,
-
-$$
-n^{1-\varepsilon/2} - n^{1-0.9\varepsilon} - 2\cdot n^{0.999} \ge n^{1-\varepsilon}.
-$$
-
-This is a purely analytic inequality proved in full with no axioms (`GapArithmetic.lean`).
-
-Parts B and C each hold with probability at least $1-\varepsilon$, so by the union bound on
-complements, both hold simultaneously with probability at least $1-2\varepsilon$.  On the joint
-event,
-
-$$
-\chi(G) - \zeta(G) \ge (k^* - n^{1-0.9\varepsilon}) - (k^* - n^{1-\varepsilon/2} + 2\cdot n^{0.999})
-= n^{1-\varepsilon/2} - n^{1-0.9\varepsilon} - 2\cdot n^{0.999} \ge n^{1-\varepsilon}.
-$$
+The flagship is `erdos_625_full_clean`; the other three are stepping
+stones with their own clean Lean theorems for documentation and audit.
 
 ---
 
 ## Axiom inventory
 
-The Azuma–Hoeffding concentration machinery, the gap arithmetic, and the union bound argument are
-fully proved from Mathlib primitives. The 3 axioms below cover exactly the two HP-2023 quantitative
-asymptotic estimates (Part B) and the Heckel 2024 second-moment bound (Part C).
+```lean
+import Erdos625.PublishableProof
+#print axioms Problem625.Publishable.erdos_625_full_clean
+```
 
-In Lean 4, an `axiom` is an admitted statement — here, a lemma cited from a published paper
-that has not been formalized inside this repository; it is distinct from Lean's foundational axioms
-(`propext`, `Classical.choice`, `Quot.sound`).
+returns exactly **7 entries**:
 
-| Axiom | File | Paper source |
-|-------|------|--------------|
-| `paperPartBThresholdAverageClassAsymptoticLowerCriterionTarget_source` | `Erdos625/PartBProfileBridge.lean` | Heckel & Panagiotou (2023), arXiv:2306.07253, Lemma 5 / eq:wert |
-| `paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source` | `Erdos625/PartBProfileBridge.lean` | Heckel & Panagiotou (2023), arXiv:2306.07253, eq:wert2 |
-| `heckel_cochromatic_second_moment` | `Erdos625/ZetaConcentration.lean` | Heckel (2024), arXiv:2409.17614, Proposition 5(b) |
+| Axiom | File | Source |
+|---|---|---|
+| `lemma_7_20_modified` | `PublishableProof.lean` | **hybrid:** HP-2023 Lemma 7.20 (modified) + our numerical certificate `lemma_7_10_ext` |
+| `partB_alphaMinusTwo_firstMomentBelowOne_source` | `PartBAlphaMinusTwoFirstMomentAxiom.lean` | HP-2023 Lemma 8.1 first-moment input at level $\alpha-2$ |
+| `chi_alphaMinusTwo_lower_bound_whp` | `CrossingPartB.lean` | HP-2023 Lemma 8.1 + Markov, at $\alpha-2$ |
+| `zeta_alphaMinusTwo_upper_bound_whp` | `CrossingPartB.lean` | **extrapolation:** Heckel 2024 Prop 5(b) + Azuma, adapted $\alpha-1 \to \alpha-2$ |
+| `propext`, `Classical.choice`, `Quot.sound` | Lean kernel | classical logic |
 
-Running `#print axioms Problem625.Publishable.erdos_625` produces exactly **6 entries**: the
-3 paper axioms above plus Lean's standard axioms `propext`, `Classical.choice`, `Quot.sound`.
+For a flat plain-text rendering see `proof/AXIOM_SNAPSHOT.txt`; for the
+per-axiom paper citations see `paper/SOURCES.md`.
 
-A fourth axiom in `Erdos625/PartBProfileBridge.lean` —
-`paperPartBEndpointClosedVectorTailMomentQBoundedProductProfilePDenomAffineHalfLogSlackSmallClosedUniformAsymptoticNegOneStirlingFactorialUpperSplitAtBotTarget_source`
-(an alternative Stirling-endpoint discharge route) — is likewise not reachable from `erdos_625`
-and does not affect the 3-axiom count.
+*Note on ordering.* Lean's `#print axioms` emits the seven entries in
+alphabetical order by full namespace path, which interleaves the kernel
+axioms with the `Problem625.*` paper-backed axioms (specifically
+`Classical.choice` precedes the `Problem625.*` block and `propext` /
+`Quot.sound` flank it). The verbatim alphabetical output is preserved in
+`proof/AXIOM_SNAPSHOT.txt`; the table above re-groups the four paper-backed
+axioms first and the three kernel axioms last for human reading.
 
-Three axioms in `Erdos625/ChromaticConnection.lean` (`threshold_tBoundedColoringError_le_with_error`,
-`kThresholdWitness_le_n_div_threshold`, `threshold_decay_axiom`) document alternative chromatic
-lower bound routes that were explored during development. None are reachable from `erdos_625`.
-See [`paper/SOURCES.md`](paper/SOURCES.md) for the complete non-reachable axiom inventory.
+**0 `sorryAx` on the proof path of `erdos_625_full_clean`** (the
+`#print axioms` output above is the machine-checked statement of
+this). Seven literal `sorry` tokens remain in `private` helper
+lemmas in non-reachable supporting modules — see the footnote above
+the flagship table.
 
-Two architectural `sorry`s exist in the repository, both off the proof path: one in
-`ChromaticConnection.lean` (`decay_exponent_eventually_le_neg`, a private lemma documenting
-an alternative decay bound approach) and one in `ZetaConcentration.lean`
-(`heckel_zeta_mean_bound_from_upper_tail`, an alternative derivation route). Running
-`lake build` will show warnings for both; neither appears in
-`#print axioms Problem625.Publishable.erdos_625`.
+---
+
+## High-level proof idea
+
+`erdos_625_full_clean` follows from `erdos_625_full` via an elementary
+rpow inequality `rpow_clean_bound_eventually` (real analysis, 0
+axioms).
+
+`erdos_625_full` case-splits on `InMainRangeMod ε n`:
+
+- **Good case** ($\sim 97\%$ of $n$): invoke `erdos_625_97`, which
+  uses the modified Heckel 2024 chain (axiom #1 above).
+- **Crossing case** ($\sim 3\%$ of $n$, $\mu_\alpha < n^{x_0+\varepsilon}$,
+  $x_0 \approx 0.02905$): three new paper-backed axioms (#2, #3, #4)
+  at level $\alpha-2$, where the structural margin
+  $\mu_{\alpha-2}/\mu_\alpha = \Theta(n^2/\log^2 n)$ keeps every
+  crossing $n$ inside HP-2023's $[n^{1.1}, n^{2.9}]$ application
+  range. The crossing argument:
+  $$
+  \chi - \zeta \ge (k_{\alpha-2} - n^{0.99}) - (k_{\alpha-1} + n^{0.99}) = (k_{\alpha-2} - k_{\alpha-1}) - 2n^{0.99} \ge n^{1-\varepsilon} - 2n^{0.99}\quad\text{whp}\ge 1-2\varepsilon.
+  $$
+
+Full proof outline in `proof/proof.md`; full arXiv-style writeup in
+`paper/main.tex`.
 
 ---
 
 ## Building and verifying
 
-**Prerequisites**: Lean 4 / Lake (install via [elan](https://github.com/leanprover/elan)). The pinned toolchain version is recorded in `lean-toolchain`
-(currently `leanprover/lean4:v4.29.0-rc8`). Internet access is required for the first build
-(downloads the Mathlib compiled cache, ~4 GB).
+**Prerequisites**: Lean 4 / Lake (install via
+[elan](https://github.com/leanprover/elan)). Toolchain version is
+pinned in `lean-toolchain` (`leanprover/lean4:v4.29.0-rc8`).
 
 ```bash
 git clone https://github.com/uthunderbird/erdosreshala-625
 cd erdosreshala-625
-lake exe cache get    # download prebuilt Mathlib oleans (~5 min)
-lake build            # build the formalization (~5 min with cache)
+lake exe cache get      # download prebuilt Mathlib oleans (~5 min)
+lake build              # ~5 min with cache; 2925 jobs, GREEN
 ```
 
-**Verify the axiom count** in a Lean file or `lake env lean`:
+Verify the axiom inventory:
 
 ```lean
 import Erdos625.PublishableProof
-#print axioms Problem625.Publishable.erdos_625
--- Expected output (6 lines):
--- axiom propext : ∀ {a b : Prop}, (a ↔ b) → a = b
--- axiom Classical.choice : {α : Sort u} → Nonempty α → α
--- axiom Quot.sound : ∀ {α : Sort u} {r : α → α → Prop} {a b : α}, r a b → ...
--- axiom paperPartBThresholdAverageClassAsymptoticLowerCriterionTarget_source : ...
--- axiom paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source : ...
--- axiom heckel_cochromatic_second_moment : ...
+#print axioms Problem625.Publishable.erdos_625_full_clean
 ```
+
+Expected output: exactly the seven entries listed in the table above.
 
 ---
 
-## Repository structure
+## Repository layout
 
 | Path | Contents |
-|------|----------|
-| `Erdos625.lean` | Library root — imports `PublishableProof.lean`; entry point for `lake build` |
-| `Erdos625/PublishableProof.lean` | **Start here.** Main theorem `erdos_625` with named steps and citations |
-| `Erdos625/ChromaticConnection.lean` | Part B chain: P[χ(G) ≥ k* − n^{1−0.9ε}] ≥ 1 − ε (0 sorry on proof path) |
-| `Erdos625/ZetaConcentration.lean` | Part C chain: Azuma concentration + P[ζ(G) ≤ …] ≥ 1 − ε (0 sorry on proof path) |
-| `Erdos625/GapArithmetic.lean` | Gap arithmetic inequality (0 axioms, 0 sorry) |
-| `Erdos625/PartBProfileBridge.lean` | Part B bridge; declares the 2 HP-2023 axioms |
-| `Erdos625/RouteD2.lean` | Intermediate assembly theorem |
-| `Erdos625/Defs.lean` | Core definitions (graph probability space, key parameters) |
-| `Erdos625/ColoringBasic.lean` | Deletion-based bounded chromatic number and basic coloring lemmas |
-| `Erdos625/FirstMomentThreshold.lean` | Class-size-bounded chromatic number $\chi_t$ and threshold $k^*$ |
-| `Erdos625/BoundedDifferences.lean` | Bounded differences / martingale infrastructure |
-| `Erdos625/IndepMoments.lean` | Independence number moment estimates |
-| `Erdos625/README.md` | Lean source guide with file roles and suggested reading order |
-| `proof/proof.md` | Standalone mathematical proof document |
-| `paper/SOURCES.md` | Precise citations for the 3 paper axioms |
-| `DEVELOPMENT.md` | Architectural decision records |
+|---|---|
+| `Erdos625.lean` | Library root; imports `PublishableProof.lean`. |
+| `Erdos625/PublishableProof.lean` | **Start here.** Four theorems + helper `rpow_clean_bound_eventually`. |
+| `Erdos625/CrossingPartB.lean` | $\alpha-2$ chain: 3 crossing axioms + deterministic threshold gap. |
+| `Erdos625/CrossingWindowProof.lean` | `KThresholdGapSource` theorem. |
+| `Erdos625/PartBAlphaMinusTwoFirstMomentAxiom.lean` | The narrow HP-2023 Lemma 8.1 first-moment axiom. |
+| `Erdos625/PartBAlphaMinusTwoFirstMomentBridge.lean` | Bridge to `kThreshold_gap_alpha_minus_2`. |
+| `Erdos625/CumulantAlphaMinusTwo.lean` | Supporting cumulant lemmas. |
+| `Erdos625/RouteD2.lean`, `Defs.lean`, `FirstMomentThreshold.lean`, `GapArithmetic.lean`, `ColoringBasic.lean`, `BoundedDifferences.lean`, `IndepMoments.lean` | Shared infrastructure. |
+| `Erdos625/ChromaticConnection.lean`, `ZetaConcentration.lean`, `PartBProfileBridge.lean` | Part B / Part C chains; `erdos_625` axioms live here. |
+| `proof/proof.md` | Standalone proof writeup. |
+| `paper/main.tex` | arXiv-style companion paper. |
+| `paper/SOURCES.md` | Per-axiom paper citations. |
+| `proof/red-team/README.md` | **Index** over the audit artefacts (chronological, with one-line summaries and the "five red-team passes" mapping); read first if exploring the audit trail. |
+| `proof/red-team/` | Audit artefacts: Markdown notes plus two Python reproducibility scripts. Local harness dumps and paper-side scratch critiques are intentionally not shipped in this publication package. |
+| `DEVELOPMENT.md` | Architectural decision records (ADRs). |
+| `ROADMAP.md` | Publication roadmap and known scope limitations. |
 
 ---
 
 ## References
 
-- Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame colourings*.
-  arXiv:[2306.07253](https://arxiv.org/abs/2306.07253). Key inputs: Lemma 5, eq:wert, eq:wert2.
-- Heckel, A. (2024). *The difference between the chromatic and the cochromatic number of a
-  random graph*. arXiv:[2409.17614](https://arxiv.org/abs/2409.17614). Key input: Proposition 5(b).
+- **HP-2023**: Heckel, A. & Panagiotou, K. (2023). *Colouring random
+  graphs: Tame colourings.* arXiv:[2306.07253](https://arxiv.org/abs/2306.07253).
+  Key inputs: Lemmas 5, 7.20, 8.1; eq:wert, eq:wert2, eq:mualpha-2.
+- **Heckel 2024**: Heckel, A. (2024). *The difference between the
+  chromatic and the cochromatic number of a random graph.*
+  arXiv:[2409.17614](https://arxiv.org/abs/2409.17614). Key input:
+  Proposition 5(b).
+- **Companion paper**: [`paper/main.tex`](paper/main.tex).
+- **Erdős–Gimbel question**: [erdosproblems.com/625](https://www.erdosproblems.com/625).
+
+---
+
+## Caveats
+
+This section consolidates every caveat a reader should weigh before
+relying on this work. The Lean kernel acceptance (build GREEN,
+`#print axioms` machine-checked) reduces — but does not eliminate —
+these risks.
+
+### Prize disclaimer
+
+This work does **not** claim the Erdős \$100 prize for Problem 625.
+The prize is for an affirmative proof of $\chi(G) - \zeta(G) \to \infty$
+**almost surely** (the Erdős–Gimbel question literally requires this).
+The flagship Lean theorem `erdos_625_full_clean` establishes only the
+**in-probability** form (a strictly weaker statement). Promoting to
+almost-sure convergence requires a Borel–Cantelli / diagonal-subsequence
+argument (with $\varepsilon_n \to 0$) which is **not yet formalized** in
+Lean and is **not** a one-line application of standard Borel–Cantelli
+(see `ROADMAP.md` §N1 for the actual measure-theoretic gap).
+
+### LLM-agent provenance
+
+This formalization — the Lean source, the companion paper, the proof
+writeup, and the five red-team audit passes in `proof/red-team/` — was
+generated by an LLM-agent pipeline (Anthropic Claude Opus 4.7, model id
+`claude-opus-4-7[1m]`, the 1M-context variant, driven by the
+open-source `operator` agent orchestrator at
+[https://github.com/uthunderbird/vibechord](https://github.com/uthunderbird/vibechord)
+whose codex-brain adapter ran `gpt-5.3-codex-spark` at `effort=low` to
+propose next agent actions) under human supervision. The 1M-context
+variant was load-bearing: the supporting Lean module
+`PartBProfileBridge.lean` is 29512 lines (~1.59 MB), exceeding what
+the 200k-context variant can hold in a single prompt. The same
+LLM-agent pipeline also conducted the five internal adversarial-audit
+passes; these are **not** independent third-party reviews.
+Human-in-the-loop curation directed the proof strategy, accepted or
+rejected proposed steps, and ran the build. See `paper/main.tex`
+Acknowledgments and `DEVELOPMENT.md` ADR-7, ADR-10, ADR-11, and ADR-12
+for details.
+
+### Shared-blind-spot limitation
+
+LLM-generated proofs may exhibit plausibility-driven failure modes that
+can survive same-model internal critique because the proof author and
+the critic share training-data blind spots. Here the proof author and
+all five internal red-team critics are the **same** model
+(`claude-opus-4-7[1m]`); the internal audits are therefore structurally
+incapable of detecting blind spots inherited from training. External
+verification by an unrelated reader, a different model, or a human
+mathematician is encouraged. The Lean kernel acceptance reduces but
+does not eliminate this risk: the four paper-backed axioms remain
+admitted, and the natural-language disclosures surrounding them —
+axiom-to-paper correspondence, the hybrid disclosure for A1, and the
+extrapolation disclosure for A4 — remain LLM-authored. Cross-model
+auditing was technically available through the `operator` framework's
+codex-acp adapter but was not used in this development (see
+`DEVELOPMENT.md` ADR-12).
+
+### Hybrid / extrapolation axioms
+
+Two of the four paper-backed axioms are **not** literal one-citation
+paper quotes:
+
+- **Axiom #1 `lemma_7_20_modified` (HYBRID).** Combines HP-2023
+  Lemma 7.20 (peer-reviewed) with an in-repository numerical
+  certificate `lemma_7_10_ext` (**not peer-reviewed**): a 1086-cell
+  $\varphi$-positivity grid with Lipschitz envelope and ~1.2 orders
+  of magnitude positivity margin. The underlying weakening is
+  explicitly conjectured by Heckel 2024 §Discussion. See
+  `proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md`.
+- **Axiom #4 `zeta_alphaMinusTwo_upper_bound_whp` (EXTRAPOLATION).**
+  Heckel 2024 Proposition 5(b) is stated and proved for
+  $(\alpha-1)$-bounded profiles; this work uses the symmetric
+  $(\alpha-2)$-version, which is **not literally in print**. The
+  transfer goes via HP-2023's general-$a$ second-moment lemmas
+  (Lemmas 6.3–6.5). See
+  `proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md`.
+
+Axioms #2 and #3 are literal HP-2023 citations.
+
+### Reject ratio (order of magnitude)
+
+Exact counts were not tracked, but qualitatively the development
+required on the order of **$10^{2}$–$10^{3}$ rejected or failed agent
+turns**; the final proof represents a small fraction of total LLM
+output. See `DEVELOPMENT.md` ADR-12.
+
+### Human supervisor and non-endorsement
+
+Daniyar Supiyev directed the proof strategy at the branch-point level.
+Contact: GitHub issues at
+[https://github.com/uthunderbird/erdosreshala-625](https://github.com/uthunderbird/erdosreshala-625).
+No institutional affiliation is claimed. Anthropic is acknowledged as
+the provider of the Claude model used. No endorsement of this work by
+Anthropic, OpenAI, or any other organization is implied.
+
+### In-probability vs almost-sure scope
+
+The Lean theorem is a per-$\varepsilon$ quantitative tail bound;
+$\chi - \zeta \to \infty$ in probability is its $\varepsilon \to 0$
+corollary and is not itself in the Lean chain either. The almost-sure
+upgrade (the literal Erdős–Gimbel question) is a strictly stronger
+statement and is not in scope of this work. See `ROADMAP.md` §N1.
 
 ---
 
 ## License
 
-Apache 2.0 (compatible with the Lean/Mathlib ecosystem).
+Apache 2.0.

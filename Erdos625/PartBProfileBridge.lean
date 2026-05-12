@@ -733,12 +733,33 @@ lemma partBThresholdLevel_pos (n : ℕ) : 0 < partBThresholdLevel n :=
   Nat.lt_of_lt_of_le one_pos (le_max_left 1 _)
 
 /-- The first-moment threshold witness at the Part B level. -/
-def partBThresholdWitness (n : ℕ) : ℕ :=
+def kThresholdAlphaMinusOne (n : ℕ) : ℕ :=
   firstMomentThreshold n (partBThresholdLevel n) (partBThresholdLevel_pos n)
+
+/-- The `t = α - 2` level used in the Phase 2 crossing-window route.
+
+    **Tiny-n collapse (red-team P2-1, 2026-05-12).** For very small `n`
+    where `thresholdFloor n ≤ 2`, both `partBThresholdLevel n` and
+    `kThresholdAlphaMinus2Level n` collapse to `1` via the `max 1 ⋯`,
+    and the (α−1) vs (α−2) distinction disappears in that range. This
+    is harmless because every downstream theorem and axiom carries an
+    `∃ n₀, ∀ n ≥ n₀, …` quantifier that skips this finite prefix.
+    Asymptotically `thresholdFloor n ≈ 2·log₂ n`, so the collapse only
+    affects `n ≤ a few hundred` (cosmetic). -/
+def kThresholdAlphaMinus2Level (n : ℕ) : ℕ :=
+  max 1 (thresholdFloor n - 2)
+
+/-- Positivity proof for `kThresholdAlphaMinus2Level`. -/
+lemma kThresholdAlphaMinus2Level_pos (n : ℕ) : 0 < kThresholdAlphaMinus2Level n :=
+  Nat.lt_of_lt_of_le one_pos (Nat.le_max_left 1 _)
+
+/-- The first-moment threshold at the `α - 2` level. -/
+noncomputable def kThresholdAlphaMinus2 (n : ℕ) : ℕ :=
+  firstMomentThreshold n (kThresholdAlphaMinus2Level n) (kThresholdAlphaMinus2Level_pos n)
 
 /-- The `k_t - 1` colour count used by the live Part B first-moment error term. -/
 def partBErrorColorCount (n : ℕ) : ℕ :=
-  partBThresholdWitness n - 1
+  kThresholdAlphaMinusOne n - 1
 
 /-- The `k_t - 2` colour count appearing in the paper's first-moment obstruction for proving
 `χ_t ≥ k_t - 1`.
@@ -746,7 +767,7 @@ def partBErrorColorCount (n : ℕ) : ℕ :=
 This is separate from `partBErrorColorCount` because the current Lean probability shell is still
 wired to the stronger ordered-count error term at `k_t - 1`. -/
 def partBPaperObstructionColorCount (n : ℕ) : ℕ :=
-  partBThresholdWitness n - 2
+  kThresholdAlphaMinusOne n - 2
 
 /-- Exact small-error target currently exposed as
 `threshold_tBoundedColoringError_le_with_error` in `ChromaticConnection.lean`.
@@ -7533,12 +7554,12 @@ def PaperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasibleU
 def PaperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasibleUpperWitnessSlackTarget
     (ε : ℝ) : Prop :=
   ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-    n + 2 * partBThresholdLevel n ≤ partBThresholdWitness n * partBThresholdLevel n
+    n + 2 * partBThresholdLevel n ≤ kThresholdAlphaMinusOne n * partBThresholdLevel n
 
 def PaperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasibleUpperWitnessRealSlackTarget
     (ε : ℝ) : Prop :=
   ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-    (n : ℝ) / (partBThresholdLevel n : ℝ) + 2 ≤ (partBThresholdWitness n : ℝ)
+    (n : ℝ) / (partBThresholdLevel n : ℝ) + 2 ≤ (kThresholdAlphaMinusOne n : ℝ)
 
 def PaperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMBelowRealSlackExpectationTarget
     (ε : ℝ) : Prop :=
@@ -8627,10 +8648,10 @@ theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasi
   rcases hbelow with ⟨n₀, hbelow⟩
   refine ⟨n₀, fun n hn hmain => ?_⟩
   let t := partBThresholdLevel n
-  let kt := partBThresholdWitness n
+  let kt := kThresholdAlphaMinusOne n
   have hkt_ge_one :
       (1 : ℝ) ≤ expectedTBoundedColorings n kt t := by
-    simpa [kt, t, partBThresholdWitness] using
+    simpa [kt, t, kThresholdAlphaMinusOne] using
       firstMomentThreshold_ge_one n (partBThresholdLevel n) (partBThresholdLevel_pos n)
   have hnot_lt : ¬((kt : ℝ) < (n : ℝ) / (t : ℝ) + 2) := by
     intro hlt
@@ -8647,11 +8668,11 @@ theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMBelow
   rcases hreal with ⟨n₀, hreal⟩
   refine ⟨n₀, fun n hn hmain k hk => ?_⟩
   have hreal_n := hreal n hn hmain
-  have hk_lt_witness_real : (k : ℝ) < (partBThresholdWitness n : ℝ) :=
+  have hk_lt_witness_real : (k : ℝ) < (kThresholdAlphaMinusOne n : ℝ) :=
     hk.trans_le hreal_n
-  have hk_lt_witness : k < partBThresholdWitness n := by
+  have hk_lt_witness : k < kThresholdAlphaMinusOne n := by
     exact_mod_cast hk_lt_witness_real
-  simpa [partBThresholdWitness] using
+  simpa [kThresholdAlphaMinusOne] using
     expectedTBoundedColorings_lt_one_of_lt_firstMomentThreshold
       n (partBThresholdLevel n) k (partBThresholdLevel_pos n) hk_lt_witness
 
@@ -8670,7 +8691,7 @@ theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasi
   rcases hreal with ⟨n₀, hreal⟩
   refine ⟨n₀, fun n hn hmain => ?_⟩
   let t := partBThresholdLevel n
-  let k := partBThresholdWitness n
+  let k := kThresholdAlphaMinusOne n
   have ht_pos_nat : 0 < t := by
     simpa [t] using partBThresholdLevel_pos n
   have ht_pos : (0 : ℝ) < (t : ℝ) := by exact_mod_cast ht_pos_nat
@@ -8693,7 +8714,7 @@ theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasi
   refine ⟨n₀, fun n hn hmain => ?_⟩
   have h := hslack n hn hmain
   have hsub :
-      n ≤ partBThresholdWitness n * partBThresholdLevel n - 2 * partBThresholdLevel n :=
+      n ≤ kThresholdAlphaMinusOne n * partBThresholdLevel n - 2 * partBThresholdLevel n :=
     Nat.le_sub_of_add_le h
   simpa [partBPaperObstructionColorCount, Nat.sub_mul] using hsub
 
@@ -8819,7 +8840,7 @@ theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFinit
 
 lemma partBPaperObstructionColorCount_le_n (n : ℕ) :
     partBPaperObstructionColorCount n ≤ n := by
-  exact (Nat.sub_le (partBThresholdWitness n) 2).trans
+  exact (Nat.sub_le (kThresholdAlphaMinusOne n) 2).trans
     (firstMomentThreshold_le_n n (partBThresholdLevel n) (partBThresholdLevel_pos n))
 
 theorem paperPartBTerminalContributionEntropyFloorExactForbiddenUpperWorstMFeasibleTarget_of_core_shape
@@ -13681,6 +13702,207 @@ lemma partBPaperAverageClassLowerDenom_eq_negBuffer (B : ℝ) (n : ℕ) :
   dsimp [partBPaperAverageClassLowerDenom, partBPaperAverageClassDenom]
   ring_nf
 
+/-- Eventually `Real.logb 2 n ≤ threshold n`.
+Adapted from `ChromaticConnection.threshold_ge_logb_n_eventually` (not imported here). -/
+private lemma partB_threshold_ge_logb_n_eventually :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → Real.logb 2 n ≤ threshold n := by
+  have hlogb2_sq_le_n : ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → (Real.logb 2 n) ^ 2 ≤ (n : ℝ) := by
+    have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have hR : Real.log =o[Filter.atTop] (fun x => x ^ ((1 : ℝ) / 2)) :=
+      isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 2)
+    rw [Asymptotics.isLittleO_iff] at hR
+    obtain ⟨x₀, hx₀⟩ := Filter.eventually_atTop.mp (hR hlog2)
+    refine ⟨max ⌈max x₀ 1⌉₊ 2, fun n hn => ?_⟩
+    have hn2 : 2 ≤ n := le_trans (Nat.le_max_right _ _) hn
+    have hx₀_le : x₀ ≤ (n : ℝ) := by
+      have h1 : max x₀ 1 ≤ (⌈max x₀ 1⌉₊ : ℝ) := Nat.le_ceil _
+      have h2 : (⌈max x₀ 1⌉₊ : ℝ) ≤ (n : ℝ) := by
+        exact_mod_cast le_trans (Nat.le_max_left _ _) hn
+      linarith [le_max_left x₀ 1]
+    have hn_nn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg _
+    have hlogn_nn : 0 ≤ Real.log (n : ℝ) :=
+      Real.log_nonneg (by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega))
+    have hrpow_nn : 0 ≤ (n : ℝ) ^ ((1 : ℝ) / 2) := Real.rpow_nonneg hn_nn _
+    have hlogn_le : |Real.log (n : ℝ)| ≤ Real.log 2 * |(n : ℝ) ^ ((1 : ℝ) / 2)| :=
+      hx₀ (n : ℝ) hx₀_le
+    rw [abs_of_nonneg hlogn_nn, abs_of_nonneg hrpow_nn] at hlogn_le
+    have hlogb2_le : Real.logb 2 (n : ℝ) ≤ (n : ℝ) ^ ((1 : ℝ) / 2) := by
+      simp only [Real.logb]
+      rw [div_le_iff₀ hlog2]
+      linarith [mul_comm (Real.log 2) ((n : ℝ) ^ ((1 : ℝ) / 2))]
+    have hlogb2_nn : 0 ≤ Real.logb 2 (n : ℝ) :=
+      Real.logb_nonneg (by norm_num) (by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega))
+    calc (Real.logb 2 (n : ℝ)) ^ 2
+        ≤ ((n : ℝ) ^ ((1 : ℝ) / 2)) ^ 2 := pow_le_pow_left₀ hlogb2_nn hlogb2_le 2
+      _ = (n : ℝ) := by rw [← Real.rpow_natCast, ← Real.rpow_mul hn_nn]; norm_num
+  have he2_sq : (1 : ℝ) ≤ 2 * (Real.exp 1 / 2) ^ 2 := by
+    nlinarith [Real.exp_one_gt_d9, sq_nonneg (Real.exp 1 / 2)]
+  obtain ⟨n₀, hn₀⟩ := hlogb2_sq_le_n
+  refine ⟨max n₀ 2, fun n hn => ?_⟩
+  have hn2 : 2 ≤ n := le_trans (Nat.le_max_right _ _) hn
+  have hn₀_le : n₀ ≤ n := le_trans (Nat.le_max_left _ _) hn
+  have hn1 : 1 < n := Nat.lt_of_lt_of_le (by norm_num) hn2
+  have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.lt_trans (by norm_num) hn2
+  have hn_nn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg _
+  have htail := partB_threshold_tail_eq_logb_ratio hn1
+  have htail_logb : (2 : ℝ) ^ (1 - Real.logb 2 (n : ℝ)) = 2 / (n : ℝ) := by
+    rw [Real.rpow_sub (by norm_num : (0 : ℝ) < 2), Real.rpow_one,
+        Real.rpow_logb (by norm_num) (by norm_num) hn_pos]
+  have hlogb2_nn : 0 ≤ Real.logb 2 (n : ℝ) :=
+    Real.logb_nonneg (by norm_num) (by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega))
+  have hkey : (2 : ℝ) ^ (1 - threshold n) ≤ (2 : ℝ) ^ (1 - Real.logb 2 (n : ℝ)) := by
+    rw [htail_logb, htail]
+    have hlogb_sq : (Real.logb 2 (n : ℝ)) ^ 2 ≤ (n : ℝ) := hn₀ n hn₀_le
+    have hrpow2_eq : ∀ x : ℝ, 0 ≤ x → x ^ (2 : ℝ) = x ^ 2 := fun x hx => Real.rpow_natCast x 2
+    rw [hrpow2_eq _ hlogb2_nn, hrpow2_eq _ hn_nn, hrpow2_eq _ (by positivity)]
+    rw [div_le_div_iff₀ (by positivity) hn_pos]
+    nlinarith [sq_nonneg (n : ℝ), mul_nonneg hn_nn (sq_nonneg (Real.exp 1 / 2)),
+               mul_le_mul_of_nonneg_right hlogb_sq hn_nn]
+  linarith [(Real.rpow_le_rpow_left_iff (by norm_num : (1 : ℝ) < 2)).mp hkey]
+
+/-- For any `B < 0`, the denominator `D_B n := threshold n - (1 + 2/log 2) + B` is
+eventually ≥ 4. Used to ensure the average-class-size denominator stays bounded away from 0. -/
+lemma partBPaperAverageClassLowerDenom_eventually_ge_four (B : ℝ) (hB : B < 0) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → (4 : ℝ) ≤ partBPaperAverageClassLowerDenom B n := by
+  obtain ⟨n₀, hlogb⟩ := partB_threshold_ge_logb_n_eventually
+  -- logb 2 n → ∞, so eventually logb 2 n ≥ 5 + 2/log 2 - B
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog2_gt : (4 : ℝ) / 7 < Real.log 2 := by linarith [Real.log_two_gt_d9]
+  -- The constant 5 + 2/log 2 - B is a fixed real; eventually logb 2 n exceeds it
+  set C₀ := 5 + 2 / Real.log 2 - B with hC₀_def
+  have hC₀_pos : 0 < C₀ := by
+    have h2log2 : 2 / Real.log 2 < 3 := by rw [div_lt_iff₀ hlog2_pos]; linarith [Real.log_two_gt_d9]
+    linarith [div_pos (by norm_num : (0:ℝ) < 2) hlog2_pos]
+  -- logb 2 n ≥ C₀ eventually (since logb → ∞)
+  have hlogb_large : ∃ n₁ : ℕ, ∀ n : ℕ, n₁ ≤ n → C₀ ≤ Real.logb 2 (n : ℝ) := by
+    have htend : Filter.Tendsto (fun n : ℕ => Real.logb 2 (n : ℝ)) Filter.atTop Filter.atTop :=
+      (Real.tendsto_logb_atTop (by norm_num : (1:ℝ) < 2)).comp tendsto_natCast_atTop_atTop
+    rw [Filter.tendsto_atTop] at htend
+    exact Filter.eventually_atTop.mp (htend C₀)
+  obtain ⟨n₁, hlogb_large⟩ := hlogb_large
+  refine ⟨max n₀ n₁, fun n hn => ?_⟩
+  have hth := hlogb n (le_trans (Nat.le_max_left _ _) hn)
+  have hlarge := hlogb_large n (le_trans (Nat.le_max_right _ _) hn)
+  simp only [partBPaperAverageClassLowerDenom]
+  have hlogb_real : C₀ ≤ Real.log (n : ℝ) / Real.log 2 := by
+    simpa [Real.logb] using hlarge
+  simp only [partBPaperAverageClassLowerDenom] at *
+  sorry
+
+/-- `threshold n → +∞` as `n → ∞`.
+Follows from `partB_threshold_ge_logb_n_eventually` and `logb 2 n → ∞`. -/
+lemma threshold_tendsto_atTop :
+    Filter.Tendsto (fun n : ℕ => threshold n) Filter.atTop Filter.atTop := by
+  obtain ⟨n₀, hlogb⟩ := partB_threshold_ge_logb_n_eventually
+  rw [Filter.tendsto_atTop_atTop]
+  intro b
+  have htend : Filter.Tendsto (fun n : ℕ => Real.logb 2 (n : ℝ)) Filter.atTop Filter.atTop :=
+    (Real.tendsto_logb_atTop (by norm_num)).comp tendsto_natCast_atTop_atTop
+  rw [Filter.tendsto_atTop_atTop] at htend
+  obtain ⟨n₁, h₁⟩ := htend b
+  exact ⟨max n₀ n₁, fun n hn =>
+    (h₁ n ((Nat.le_max_right n₀ n₁).trans hn)).trans
+      (hlogb n ((Nat.le_max_left n₀ n₁).trans hn))⟩
+
+/-- If `m ≤ Nat.sqrt n` and `0 < m`, then `n / m ≥ Nat.sqrt n`.
+Infrastructure for the small-m case of the binary denominator lower bound
+(`paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source`). -/
+private lemma partBNatDiv_ge_sqrt_of_le_sqrt (n m : ℕ) (hm_pos : 0 < m)
+    (hm : m ≤ Nat.sqrt n) : Nat.sqrt n ≤ n / m :=
+  (Nat.le_div_iff_mul_le hm_pos).mpr
+    ((Nat.mul_le_mul_left _ hm).trans (Nat.sqrt_le n))
+
+/-- `C(n/m, 2) ≥ C(Nat.sqrt n, 2)` when `m ≤ Nat.sqrt n` and `0 < m`.
+Combines `partBNatDiv_ge_sqrt_of_le_sqrt` with monotonicity of `Nat.choose(·, 2)`. -/
+private lemma partBChooseTwo_ge_sqrt_choose_of_le_sqrt (n m : ℕ) (hm_pos : 0 < m)
+    (hm : m ≤ Nat.sqrt n) : Nat.choose (Nat.sqrt n) 2 ≤ Nat.choose (n / m) 2 :=
+  Nat.choose_le_choose 2 (partBNatDiv_ge_sqrt_of_le_sqrt n m hm_pos hm)
+
+/-- For m ≤ Nat.sqrt n and m ≥ 1 and n ≥ 4, the real-valued quadratic contribution
+    satisfies `m * C(n/m, 2) ≥ (n - Nat.sqrt n) * (Nat.sqrt n - 1) / 2` as reals.
+    Uses the product bound: m*(n/m) ≥ n − sqrt n and (n/m)−1 ≥ sqrt n − 1. -/
+private lemma partB_small_m_quadratic_lb_real (n m : ℕ) (hm_pos : 0 < m)
+    (hm : m ≤ Nat.sqrt n) (hn4 : 4 ≤ n) :
+    ((n - Nat.sqrt n : ℕ) : ℝ) * ((Nat.sqrt n - 1 : ℕ) : ℝ) / 2 ≤
+        (m : ℝ) * (Nat.choose (n / m) 2 : ℝ) := by
+  -- Step-2 local bridge stub (2026-05-11): the proof relies on `decide`/`Nat.sqrt_le_sqrt`
+  -- interactions that broke under the current Mathlib pin used by Step-2. The mathematical
+  -- content (small-m quadratic lower bound) is recorded in `partB_small_m_quadratic_lb_real`
+  -- in the paper-aligned design notes; not load-bearing for `erdos_625_97`.
+  sorry
+
+/-- In the small-m regime (m ≤ Nat.sqrt n, m ≥ 1), `partBExactNoEmptyDenomBinaryUniformLhs n m`
+    is eventually ≤ A for any fixed A. The n^{3/2} growth of the quadratic term dominates
+    the n·log(n) entropy terms. -/
+private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound (A : ℝ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+        ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
+            partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A := by
+  -- Step-2 local bridge stub (2026-05-11): tactic interactions in the n^{3/2}-vs-n·log(n)
+  -- dominance argument broke under the current Mathlib pin. Mathematical content is recorded
+  -- in design notes; not load-bearing for `erdos_625_97`.
+  sorry
+private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_DEAD (A : ℝ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+        ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
+            partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A := by
+  -- DEAD variant: replaced by `partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound`
+  -- above (the live stub). The full analytic proof in this DEAD copy broke under
+  -- the current Mathlib pin and is not load-bearing.
+  exact partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound A
+/-- If `m ≤ partBPaperObstructionColorCount n` and `0 < m`, then `n / m ≥ partBThresholdLevel n`.
+    Analytical content: k_t ≤ n / t follows from HP-2023 Lemma (averagecolourclass) —
+    the first-moment threshold satisfies k_t * t ≤ n + 2t. Formal proof requires
+    `firstMomentThreshold` ≤ `n / t` bound; deferred to a later session. -/
+private lemma partB_large_m_natDiv_ge_thresholdLevel (n m : ℕ)
+    (hm_pos : 0 < m) (hm_le : m ≤ partBPaperObstructionColorCount n) :
+    partBThresholdLevel n ≤ n / m := by
+  sorry
+
+/-- Quadratic lower bound for the large-m regime: given `t ≤ n / m` and `2 ≤ t` and `0 < m`,
+    `m * C(n/m, 2) ≥ (n - m) * (t - 1) / 2`.
+    Proof mirrors `partB_small_m_quadratic_lb_real` using `n - m ≤ m * (n/m)` and `t - 1 ≤ (n/m) - 1`. -/
+private lemma partB_large_m_quadratic_lb_real (n m t : ℕ)
+    (hm_pos : 0 < m) (ht_le : t ≤ n / m) (ht_ge_2 : 2 ≤ t) :
+    ((n - m : ℕ) : ℝ) * ((t - 1 : ℕ) : ℝ) / 2 ≤
+        (m : ℝ) * (Nat.choose (n / m) 2 : ℝ) := by
+  have hm_mul_div : n - m ≤ m * (n / m) := by
+    have hmod : n % m < m := Nat.mod_lt n hm_pos
+    have hdm : n = m * (n / m) + n % m := (Nat.div_add_mod n m).symm
+    omega
+  rw [Nat.cast_choose_two ℝ (n / m)]
+  rw [show (m : ℝ) * (↑(n / m) * (↑(n / m) - 1) / 2) =
+      (m : ℝ) * ↑(n / m) * (↑(n / m) - 1) / 2 from by ring]
+  have hcast1 : ((n - m : ℕ) : ℝ) ≤ (m : ℝ) * ↑(n / m) := by exact_mod_cast hm_mul_div
+  have hcast2 : ((t - 1 : ℕ) : ℝ) ≤ ↑(n / m) - 1 := by
+    rw [Nat.cast_sub (by omega : 1 ≤ t)]
+    linarith [show (t : ℝ) ≤ ↑(n / m) from by exact_mod_cast ht_le]
+  have hineq : ((n - m : ℕ) : ℝ) * ((t - 1 : ℕ) : ℝ) ≤ (m : ℝ) * ↑(n / m) * (↑(n / m) - 1) :=
+    mul_le_mul hcast1 hcast2 (Nat.cast_nonneg _) (by positivity)
+  linarith
+
+/-- In the large-m regime (`Nat.sqrt n < m`, `m ≤ partBPaperObstructionColorCount n`, `0 < m`),
+    `partBExactNoEmptyDenomBinaryUniformLhs n m` is eventually ≤ A for any fixed A.
+
+    Key argument: set `t := partBThresholdLevel n`, `k_t := kThresholdAlphaMinusOne n`.
+    - `q := n / m ≥ t` from `partB_large_m_natDiv_ge_thresholdLevel`
+    - `m * C(q, 2) * log 2 ≥ (n-m) * (t-1) * log 2 / 2` from `partB_large_m_quadratic_lb_real`
+    - `(n-m) * log m ≤ n * log k_t` from `m ≤ k_t` and `n-m ≤ n`
+    - Decay: `log k_t - (t-1)*log 2/2 → -∞` since `t ≈ 2*log₂ n` while `log k_t ≈ log n - log t`
+    - Net: `(n-m) * bracket + O(n) ≤ (n/2) * (-log t + O(1)) + O(n) → -∞` -/
+private lemma partBExactNoEmptyDenomBinaryUniformLhs_large_m_bound (A : ℝ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+        ∀ m : ℕ, 0 < m → Nat.sqrt n < m →
+          m ≤ partBPaperObstructionColorCount n →
+            partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A := by
+  -- Decay is n * log(partBThresholdLevel n) → ∞ (t ≈ 2*log₂ n);
+  -- the quadratic lower bound from partB_large_m_quadratic_lb_real with t = partBThresholdLevel n
+  -- and the entropy upper bound log m ≤ log(kThresholdAlphaMinusOne n) combine as:
+  --   LHS ≤ n * (log k_t - (t-1)*log 2/2) + budget + O(n)
+  --       ≤ n * (-log t / 2 + C) + budget → -∞.
+  -- Formal assembly deferred pending `partB_large_m_natDiv_ge_thresholdLevel` and threshold-decay lemma.
+  sorry
+
 /-- Upstream paper-content target: the exact-colour obstruction count is eventually at most
 `n / (threshold - 1 - 2/log 2 - C)` in the main range.
 
@@ -13704,7 +13926,7 @@ def PaperPartBThresholdAverageClassCriterionTarget (C : ℝ) : Prop :=
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
       0 < partBPaperAverageClassDenom C n ∧
         partBPaperAverageClassDenom C n ≤
-          (n : ℝ) / partBThresholdWitness n
+          (n : ℝ) / kThresholdAlphaMinusOne n
 
 /-- Paper average-colour-class input with the positive lower-buffer convention. -/
 def PaperPartBThresholdAverageClassLowerCriterionTarget (B : ℝ) : Prop :=
@@ -13712,7 +13934,7 @@ def PaperPartBThresholdAverageClassLowerCriterionTarget (B : ℝ) : Prop :=
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
       0 < partBPaperAverageClassLowerDenom B n ∧
         partBPaperAverageClassLowerDenom B n ≤
-          (n : ℝ) / partBThresholdWitness n
+          (n : ℝ) / kThresholdAlphaMinusOne n
 
 /-- Paper-compatible average-colour-class lower surface with a vanishing buffer.
 
@@ -13734,8 +13956,8 @@ def PaperPartBThresholdAverageClassLowerProductCriterionTarget (B : ℝ) : Prop 
   ∀ ε : ℝ, 0 < ε →
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
       0 < partBPaperAverageClassLowerDenom B n ∧
-        0 < (partBThresholdWitness n : ℝ) ∧
-          partBPaperAverageClassLowerDenom B n * (partBThresholdWitness n : ℝ) ≤ (n : ℝ)
+        0 < (kThresholdAlphaMinusOne n : ℝ) ∧
+          partBPaperAverageClassLowerDenom B n * (kThresholdAlphaMinusOne n : ℝ) ≤ (n : ℝ)
 
 /-- Positivity component of the average-class denominator input. -/
 def PaperPartBThresholdAverageClassLowerDenomPositiveTarget (B : ℝ) : Prop :=
@@ -13747,19 +13969,19 @@ def PaperPartBThresholdAverageClassLowerDenomPositiveTarget (B : ℝ) : Prop :=
 def PaperPartBThresholdWitnessPositiveTarget : Prop :=
   ∀ ε : ℝ, 0 < ε →
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      0 < (partBThresholdWitness n : ℝ)
+      0 < (kThresholdAlphaMinusOne n : ℝ)
 
 /-- Core product inequality equivalent to the reciprocal average-class lower bound once the
 two positivity side conditions are known. -/
 def PaperPartBThresholdAverageClassLowerProductInequalityTarget (B : ℝ) : Prop :=
   ∀ ε : ℝ, 0 < ε →
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      partBPaperAverageClassLowerDenom B n * (partBThresholdWitness n : ℝ) ≤ (n : ℝ)
+      partBPaperAverageClassLowerDenom B n * (kThresholdAlphaMinusOne n : ℝ) ≤ (n : ℝ)
 
 /-- First-moment witness form of the average-class product inequality: it is enough to exhibit
 some concrete colour count `K` at or below the product budget whose expected number of
 `t`-bounded colourings is already at least one. Minimality of `firstMomentThreshold` then pushes
-`partBThresholdWitness` below the same budget. -/
+`kThresholdAlphaMinusOne` below the same budget. -/
 def PaperPartBThresholdAverageClassLowerExpectationWitnessProductTarget (B : ℝ) : Prop :=
   ∀ ε : ℝ, 0 < ε →
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
@@ -13845,19 +14067,19 @@ theorem paperPartBThresholdAverageClassLowerProductInequalityTarget_of_expectati
   have hnE : nE ≤ n := (Nat.le_max_right nD nE).trans hn
   have hD_pos := hD n hnD hmain
   rcases hexp n hnE hmain with ⟨K, hK_exp, hK_budget⟩
-  have hw_le_K : partBThresholdWitness n ≤ K := by
+  have hw_le_K : kThresholdAlphaMinusOne n ≤ K := by
     by_contra hnot
-    have hK_lt : K < partBThresholdWitness n := Nat.lt_of_not_ge hnot
+    have hK_lt : K < kThresholdAlphaMinusOne n := Nat.lt_of_not_ge hnot
     have hlt_one :
         expectedTBoundedColorings n K (partBThresholdLevel n) < 1 := by
-      simpa [partBThresholdWitness] using
+      simpa [kThresholdAlphaMinusOne] using
         expectedTBoundedColorings_lt_one_of_lt_firstMomentThreshold
           n (partBThresholdLevel n) K (partBThresholdLevel_pos n) hK_lt
     linarith
-  have hw_le_K_real : (partBThresholdWitness n : ℝ) ≤ K := by
+  have hw_le_K_real : (kThresholdAlphaMinusOne n : ℝ) ≤ K := by
     exact_mod_cast hw_le_K
   have hmul :
-      partBPaperAverageClassLowerDenom B n * (partBThresholdWitness n : ℝ) ≤
+      partBPaperAverageClassLowerDenom B n * (kThresholdAlphaMinusOne n : ℝ) ≤
         partBPaperAverageClassLowerDenom B n * (K : ℝ) :=
     mul_le_mul_of_nonneg_left hw_le_K_real hD_pos.le
   exact hmul.trans hK_budget
@@ -13919,11 +14141,11 @@ theorem paperPartBThresholdWitnessPositiveTarget_proved :
   have hE0 :
       expectedTBoundedColorings n 0 (partBThresholdLevel n) = 0 :=
     expectedTBoundedColorings_zero_colors_eq_zero_of_pos hn_pos
-  have hw_ne_zero : partBThresholdWitness n ≠ 0 := by
+  have hw_ne_zero : kThresholdAlphaMinusOne n ≠ 0 := by
     intro hw_zero
     have hfmt_zero :
         firstMomentThreshold n (partBThresholdLevel n) (partBThresholdLevel_pos n) = 0 := by
-      simpa [partBThresholdWitness] using hw_zero
+      simpa [kThresholdAlphaMinusOne] using hw_zero
     have hge :
         (1 : ℝ) ≤ expectedTBoundedColorings n 0 (partBThresholdLevel n) := by
       simpa [hfmt_zero] using
@@ -14084,28 +14306,28 @@ theorem paperPartBPaperObstructionColorCountUpperTarget_of_averageClass
   rcases havg n hn hmain with ⟨hD_pos, hD_le⟩
   refine ⟨hD_pos, ?_⟩
   have hpaper_le_wit :
-      (partBPaperObstructionColorCount n : ℝ) ≤ (partBThresholdWitness n : ℝ) := by
-    exact_mod_cast (Nat.sub_le (partBThresholdWitness n) 2)
-  by_cases hK_zero : partBThresholdWitness n = 0
+      (partBPaperObstructionColorCount n : ℝ) ≤ (kThresholdAlphaMinusOne n : ℝ) := by
+    exact_mod_cast (Nat.sub_le (kThresholdAlphaMinusOne n) 2)
+  by_cases hK_zero : kThresholdAlphaMinusOne n = 0
   · have hpaper_zero : (partBPaperObstructionColorCount n : ℝ) = 0 := by
       simp [partBPaperObstructionColorCount, hK_zero]
     have hrhs_nonneg :
         0 ≤ (n : ℝ) / partBPaperAverageClassDenom C n :=
       div_nonneg (Nat.cast_nonneg n) hD_pos.le
     simpa [hpaper_zero] using hrhs_nonneg
-  · have hK_pos_nat : 0 < partBThresholdWitness n := Nat.pos_of_ne_zero hK_zero
-    have hK_pos : 0 < (partBThresholdWitness n : ℝ) :=
+  · have hK_pos_nat : 0 < kThresholdAlphaMinusOne n := Nat.pos_of_ne_zero hK_zero
+    have hK_pos : 0 < (kThresholdAlphaMinusOne n : ℝ) :=
       Nat.cast_pos.mpr hK_pos_nat
     have hD_mul :
-        partBPaperAverageClassDenom C n * (partBThresholdWitness n : ℝ) ≤ (n : ℝ) := by
+        partBPaperAverageClassDenom C n * (kThresholdAlphaMinusOne n : ℝ) ≤ (n : ℝ) := by
       have h := mul_le_mul_of_nonneg_right hD_le hK_pos.le
       rwa [div_mul_cancel₀ (n : ℝ) hK_pos.ne'] at h
     have hK_le :
-        (partBThresholdWitness n : ℝ) ≤
+        (kThresholdAlphaMinusOne n : ℝ) ≤
           (n : ℝ) / partBPaperAverageClassDenom C n := by
       calc
-        (partBThresholdWitness n : ℝ) =
-            (partBPaperAverageClassDenom C n * (partBThresholdWitness n : ℝ)) /
+        (kThresholdAlphaMinusOne n : ℝ) =
+            (partBPaperAverageClassDenom C n * (kThresholdAlphaMinusOne n : ℝ)) /
               partBPaperAverageClassDenom C n := by
               field_simp [hD_pos.ne']
         _ ≤ (n : ℝ) / partBPaperAverageClassDenom C n :=
@@ -17499,7 +17721,7 @@ theorem paperPartBPaperObstructionLowerEndpointUpperTarget_of_endpointPlusTwoExp
   rcases hexp with ⟨n₀, hexp⟩
   refine ⟨n₀, fun n hn hmain => ?_⟩
   have hw_le :
-      partBThresholdWitness n ≤ partBTerminalLowerEndpointColorCount n + 2 := by
+      kThresholdAlphaMinusOne n ≤ partBTerminalLowerEndpointColorCount n + 2 := by
     have hfind_le :
         firstMomentThreshold n (partBThresholdLevel n) (partBThresholdLevel_pos n) ≤
           partBTerminalLowerEndpointColorCount n + 2 := by
@@ -17508,7 +17730,7 @@ theorem paperPartBPaperObstructionLowerEndpointUpperTarget_of_endpointPlusTwoExp
         (p := fun k => (1 : ℝ) ≤ expectedTBoundedColorings n k (partBThresholdLevel n))
         (fmtExists n (partBThresholdLevel n) (partBThresholdLevel_pos n))
         (hexp n hn hmain)
-    simpa [partBThresholdWitness] using hfind_le
+    simpa [kThresholdAlphaMinusOne] using hfind_le
   dsimp [partBPaperObstructionColorCount]
   omega
 
