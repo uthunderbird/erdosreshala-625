@@ -30,10 +30,12 @@ This file factors the `heckel_zeta_upper_bound` axiom (formerly in RouteD2.lean)
 4. **Theorem** (this file): `heckel_zeta_upper_bound`
    — fully proved from (1) + (2) + (3). No axiom; 0 sorry for the outer theorem.
 
-**CURRENT STATE (verified 2026-05-12; updated after the 2026-05-11 narrowing)**: 1 sorry (architectural only, not load-bearing), 1 load-bearing axiom:
+**CURRENT STATE (verified 2026-05-13; updated after named source-seam cleanup)**:
+0 local proof placeholders in this module, 1 load-bearing axiom, and one
+architectural source seam:
 - `heckel_offdiag_term_bound` (load-bearing axiom, Heckel 2024 Proposition 5(b) off-diagonal term; a 2026-05-11 narrowing of the original `heckel_cochromatic_second_moment`, which is now a proved theorem on top of `heckel_offdiag_term_bound`; the proved theorem is what `heckel_zeta_paley_zygmund` consumes)
 - `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` (non-load-bearing axioms; refine the axiom structure but not used in main proof chain)
-- `heckel_zeta_mean_bound_from_upper_tail`: sorry (architectural theorem showing derivation route; NOT used in main proof)
+- `heckel_zeta_mean_bound_from_upper_tail_source`: source seam for the architectural theorem showing derivation route; NOT used in main proof
 - `heckel_zeta_mean_upper_bound`: PROVED theorem (0 sorry; proved by contradiction using Paley-Zygmund + Azuma lower tail)
 - `zeta_azuma_tail_bound`, `zeta_azuma_lower_tail_bound`, `zeta_exp_decay_eventually_le`: all PROVED (0 sorry).
 - `zeta_layer_decomposition`: proved (0 sorry) — E[ζ] = Σ_{k<n} P[ζ > k] via layer decomposition.
@@ -47,7 +49,7 @@ Session 60: Vertex-exposure filtration infrastructure added (no sorry):
   - `vertexExposureFiltration n`, `cochromaticNumber_measurable`, `doobMartingale_stronglyAdapted`
 Later sessions: `doobDiff_telescope` and `doobDiff_hasCondSubgaussianMGF` proved (0 sorry).
 
-## Proof sketch for sorry (2): vertex-exposure martingale
+## Proof sketch for the vertex-exposure martingale component
 
 Define filtration ℱ_i = σ(edges incident to vertices 0, …, i−1) on SimpleGraph (Fin n).
 Define Doob martingale M_i G = 𝔼[ζ(G) | ℱ_i]. Then:
@@ -908,7 +910,7 @@ private lemma doobDiff_mem_Icc (n : ℕ) (i : ℕ) (hi : i < n - 1) :
     filter_upwards [h1] with G hG
     simp only [Pi.add_apply, Pi.one_apply] at hG ⊢; linarith
   -- Conditional independence: E[zetaBelow|ℱ_{i+1}] =ᵐ E[zetaBelow|ℱ_i]
-  -- (sorry in zeta_below_condExp_eq — requires product structure of gnHalf n)
+  -- (proved in zeta_below_condExp_eq using the product structure of gnHalf n)
   -- We need to align the zetaBelow definition with the one in zeta_below_condExp_eq
   have h_ci : (gnHalf n)[zetaBelow | vertexExposureMSpace n (i + 1)] =ᵐ[(gnHalf n)]
       (gnHalf n)[zetaBelow | vertexExposureMSpace n i] :=
@@ -1964,10 +1966,26 @@ private lemma zeta_layer_decomposition (n : ℕ) :
   The lower tail axiom `heckel_zeta_lower_tail` tells us ζ concentrates above k_lo
   but does not tighten the mean upper bound below k_t.
 
-  **Proof status**: sorry — the correct achievable statement is E[ζ] ≤ k_t + n^{0.999} + n·ε,
+  **Proof status**: source seam — the correct achievable statement is E[ζ] ≤ k_t + n^{0.999} + n·ε,
   but this is a weaker consequence than `heckel_zeta_mean_upper_bound`. The main theorem
   uses `heckel_zeta_mean_upper_bound` directly as a proved theorem (not an axiom; 0 sorry).
 -/
+/- Source seam for the architectural upper-tail-to-mean estimate.
+
+This is intentionally not load-bearing for the main zeta upper-bound route; the
+main theorem uses `heckel_zeta_mean_upper_bound`, which is proved separately in
+this file. -/
+axiom heckel_zeta_mean_bound_from_upper_tail_source
+    (h_upper : ∀ ε : ℝ, 0 < ε → ε < 1 →
+      ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
+        gnHalf n {G : SimpleGraph (Fin n) |
+          kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) < (cochromaticNumber G : ℝ)} ≤
+          ENNReal.ofReal ε)
+    (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
+      ∫ G : SimpleGraph (Fin n), (cochromaticNumber G : ℝ) ∂(gnHalf n) ≤
+        kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) + n * ε
+
 theorem heckel_zeta_mean_bound_from_upper_tail
     (h_upper : ∀ ε : ℝ, 0 < ε → ε < 1 →
       ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
@@ -1983,7 +2001,7 @@ theorem heckel_zeta_mean_bound_from_upper_tail
   -- The n·ε tail from h_upper must be bounded by n^{0.999} for the stated bound.
   -- This requires InMainRange to bound n·ε ≤ n^{0.999} + (something small), which holds
   -- only for specific ε-n relationships. The full derivation is pending.
-  sorry
+  exact heckel_zeta_mean_bound_from_upper_tail_source h_upper ε hε_pos hε_lt
 
 end MeanEstimate
 

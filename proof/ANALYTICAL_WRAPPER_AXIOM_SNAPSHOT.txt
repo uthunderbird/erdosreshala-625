@@ -1,0 +1,29 @@
+-- Recorded output of:
+--   #print axioms Problem625.Analytical.erdos_625_full_analytical
+-- Date: 2026-05-15
+-- Source: publish/erdos-625/Erdos625/AnalyticalWrapper.lean
+
+'Problem625.Analytical.erdos_625_full_analytical' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound,
+ Problem625.Analytical.good_branch_partial_away_from_one_loglog_whp_of_bridge_inputs,
+ Problem625.Analytical.lowBranchFirstMomentGapAxiom,
+ Problem625.Analytical.upper_boundary_r2_integrated_loglog_whp_of_bridge_inputs]
+
+-- Notes (2026-05-15):
+--
+-- lowBranchFirstMomentGapAxiom replaces the prior P0 axiom
+-- low_branch_quantitative_splice_loglog_whp_of_bridge_inputs.
+-- The old axiom is now a theorem delegating to lowBranchFirstMomentGapAxiom.
+--
+-- lowBranchFirstMomentGapAxiom cites:
+--   HP-2023 (arXiv:2306.07253), Corollaries 37+39, Lemma 7.4, lines 2364-2369
+--   Heckel (2024) (arXiv:2409.17614), line 516 (eq:firstmomentcocol)
+--
+-- This proof does NOT use C5, tameness, phi(1,x,1) > 0, or mu_alpha >= n^{x0+eps}.
+-- Mathematical proof: see proof/proof.md §Regime I (included in this package).
+-- Red-team confirmation: 2026-05-15 (all attack vectors refuted;
+--   internal LLM audit by same pipeline; not independently verified by third party).
+--
+-- Source theorem notes for middle and upper branches are now included in
+-- proof/source-notes/ in this package.

@@ -30,9 +30,8 @@ Plus the three Lean kernel axioms: `propext`, `Classical.choice`, `Quot.sound`.
   explicitly conjectures the weakening above.
 - Numerical certificate `lemma_7_10_ext`: in-repository Lipschitz envelope
   on a 1086-cell grid filling the $\varphi$-positivity gap
-  $[x_0+\varepsilon, 0.04)$ outside HP-2023 Lemma 7.10's coverage. See
-  [`../proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md`](../proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md)
-  and [`../proof/red-team/lemma_7_10_ext.md`](../proof/red-team/lemma_7_10_ext.md).
+  $[x_0+\varepsilon, 0.04)$ outside HP-2023 Lemma 7.10's coverage.
+  (Audit details are in the parent Erdosreshala repository work notes (https://github.com/uthunderbird/erdosreshala-625, subdirectory problems/625/work/notes/).)
 
 **Status**: HYBRID. Combines a peer-reviewed paper claim with our own
 (not peer-reviewed) numerical certificate. Disclosed in the Lean
@@ -96,8 +95,8 @@ symmetric move via HP-2023's second-moment lemmas (stated for general
 $a$-bounded profiles in HP-2023 §6.3–6.5).
 
 **Status**: $\alpha-2$ EXTRAPOLATION of a published $\alpha-1$ result;
-not a literal one-citation paper axiom. Detailed transfer audit in
-[`../proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md`](../proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md).
+not a literal one-citation paper axiom. Detailed transfer audit is in
+the parent Erdosreshala repository work notes (https://github.com/uthunderbird/erdosreshala-625, subdirectory problems/625/work/notes/).
 
 **Proposal authorship**: LLM agent. The $\alpha-1 \to \alpha-2$
 extrapolation framing emerged from an internal swarm session
@@ -169,5 +168,7 @@ to alternative proof routes explored during development:
   EXTRAPOLATION (A4) of published results, not literal one-citation
   facts. Both are explicitly disclosed.
 - The other 2 paper axioms (A2, A3) are literal HP-2023 citations.
-- See [`../proof/red-team/`](../proof/red-team/) for five independent
-  red-team passes verifying the disclosure framing.
+- Five internal red-team passes verifying the disclosure framing are documented
+  in the parent Erdosreshala repository work notes
+  (https://github.com/uthunderbird/erdosreshala-625, subdirectory problems/625/work/notes/;
+  conducted by the same LLM pipeline; see `../DEVELOPMENT.md` ADR-10 and ADR-12).

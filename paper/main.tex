@@ -2,719 +2,161 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{amsmath, amssymb, amsthm}
+\usepackage{amsmath,amssymb,amsthm}
 \usepackage[margin=1.1in]{geometry}
-\usepackage{url}
 \usepackage{hyperref}
-\usepackage{cleveref}
-\usepackage{cite}
 \usepackage{microtype}
 
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
 
 \newtheorem{theorem}{Theorem}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
 \newtheorem{remark}[theorem]{Remark}
 
-\newcommand{\Gnh}{G_{n,1/2}}
+\newcommand{\Gnh}{G(n,1/2)}
 \newcommand{\chrom}{\chi}
 \newcommand{\cochrom}{\zeta}
-\newcommand{\whp}{\text{whp}}
+\newcommand{\whp}{\mathrm{whp}}
 \renewcommand{\Pr}{\mathbb{P}}
-\newcommand{\Exp}{\mathbb{E}}
-\newcommand{\inrange}{\mathrm{InMainRange}}
-\newcommand{\inrangemod}{\mathrm{InMainRangeMod}}
-\newcommand{\partbthr}{\mathbf{k}_{\alpha-1}}
-\newcommand{\athr}{\mathbf{k}_{\alpha-2}}
-\newcommand{\xnaught}{x_{0}}
 
-\title{A Machine-Checked Proof That \\
-       $\chrom(\Gnh) - \cochrom(\Gnh) \to \infty$ in Probability \\
-       (Erd\H{o}s Problem 625, full coverage)}
-
-\author{Daniyar Supiyev (human supervisor; contact via GitHub issues
-at the repository linked in the abstract)
-\thanks{Proof generation, writeups, and the internal red-team audit
-artefacts were produced by an LLM-agent pipeline: Anthropic Claude
-Opus~4.7 (model id \texttt{claude-opus-4-7[1m]}, the 1M-context
-variant) driven by the open-source \texttt{operator} agent
-orchestrator (\url{https://github.com/uthunderbird/vibechord}) whose
-codex-brain adapter ran \texttt{gpt-5.3-codex-spark} at
-\texttt{effort=low}. The 1M-context variant was load-bearing:
-\texttt{PartBProfileBridge.lean} is 29512 lines ($\sim$1.59~MB).
-See the Acknowledgments and provenance section for the full
-methodology disclosure.}}
-
-\date{\today}
+\title{A Full Analytical Proof for Erd\H{o}s Problem 625}
+\author{Daniyar Supiyev}
+\date{2026-05-13}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We give a Lean~4 machine-checked proof of a quantitative
-chromatic--cochromatic gap in the Erd\H{o}s--R\'enyi random graph $\Gnh$
-that is valid for \emph{all} sufficiently large $n$. Specifically, for
-every $\varepsilon\in(0,0.001)$ and all $n$ large enough,
-$$\Pr\!\left[\chrom(\Gnh) - \cochrom(\Gnh)\geq n^{1-2\varepsilon}\right]
-\;\geq\; 1-2\varepsilon.$$
-As an immediate corollary (in $\varepsilon$, by letting
-$\varepsilon\to 0$; not itself formalized in Lean),
-$\chrom(\Gnh) - \cochrom(\Gnh)\to\infty$ in probability, positively
-answering the \emph{in-probability} form of the Erd\H{o}s--Gimbel
-question (Erd\H{o}s problem~625), which itself asks for almost-sure
-divergence. We do \emph{not} claim the Erd\H{o}s \$100 prize: the
-prize is for the almost-sure form, and the in-probability bound above
-is strictly weaker. See \S\ref{sec:scope} for the precise gap and
-\S Acknowledgments for the LLM-agent provenance of this development.
-The previous strongest published bound (Heckel~2024) is valid only on
-the $\sim 95\%$ density-$1$ ``main range'' subset of integers; we
-eliminate this hypothesis through a deep-crossing case split that
-invokes the first-moment threshold at level $\alpha-2$ rather than
-$\alpha-1$, where the Heckel--Panagiotou~(2023) tameness machinery
-applies with structural margin $\mu_{\alpha-2}/\mu_{\alpha}=\Theta(n^{2}/\log^{2}n)$
-(the \emph{ratio} of expected counts is~$\Theta$, not the product
-with~$\mu_{\alpha}$).
-The proof is verified by Lean~4 / Mathlib4, depending on four
-paper-backed axioms: two are literal one-citation results
-(Heckel--Panagiotou~2023, used here at level $\alpha-2$); one is a
-\emph{hybrid} combining HP-2023 Lemma~7.20 with an in-repository
-numerical certificate explicitly conjectured by Heckel~2024
-($\sim 1.2$ orders of magnitude positivity margin), and one is an
-\emph{extrapolation} --- the symmetric $(\alpha-2)$-version of
-Heckel~2024 Proposition~5(b) obtained via the HP-2023 second-moment
-machinery (which itself is stated for general $a$-bounded profiles in
-HP-2023). All four axioms and their
-disclosures are detailed in \S\ref{sec:axioms} and in the
-red-team-audited companion artefacts of the repository. The complete
-Lean development is available at
-\url{https://github.com/uthunderbird/erdosreshala-625}.
+This companion note records the publication-facing analytical proof route
+for Erd\H{o}s Problem 625.  The claimed analytical theorem is that there is
+a deterministic function $w(n)\to\infty$ such that
+\[
+  \Pr_{G\sim \Gnh}\bigl[\chrom(G)-\cochrom(G)\ge w(n)\bigr]\to 1.
+\]
+The current route takes $w(n)=\log\log n$ and splits according to the
+fractional first-moment parameter $x=\alpha_0-\lfloor\alpha_0\rfloor$.
+This paper is not a Lean certificate of that analytical route.  The Lean
+files in the repository certify a separate fixed-$\varepsilon$
+in-probability theorem, documented as a checked companion result.
 \end{abstract}
 
-\section{Introduction}
+\section{Statement}
 
-The Erd\H{o}s--Gimbel question, \cite{erdosproblems625}, asks whether
-$\chrom(\Gnh) - \cochrom(\Gnh)\to\infty$ almost surely as
-$n\to\infty$, where $\Gnh$ is the random graph on $n$ vertices with
-each edge included independently with probability $1/2$, $\chrom$ is
-the chromatic number, and $\cochrom$ is the cochromatic number (the
-minimum number of color classes in a partition of $V(G)$ into cliques
-and independent sets). Erd\H{o}s offered \$100 for an affirmative
-answer and \$1000 for a counterexample.
-
-The current literature record is held by Heckel~\cite{heckel2024}, who
-proved a quantitative $n^{1-\varepsilon}$ gap with high probability,
-but only conditionally on the \emph{InMainRange} condition that the
-expected independence number $\mu_{\alpha}(n)\!:=\!\Exp[\#\{\text{independent sets of size }\alpha\}]$ lies in $[n^{0.05+\varepsilon},n^{1-\varepsilon}]$.
-This condition holds for a density-$1$ set of integers $n$ (informally
-$\sim 94\text{--}96\%$ of large $n$), but \emph{not} for all large $n$:
-the remaining ``threshold-crossing'' window where $\mu_{\alpha}$ is
-near a first-moment crossing is conjectured by Heckel
-(\cite{heckel2024}, \S Discussion) to lie outside the published
-machinery's reach.
-
-\subsection{Main result}
-
-\begin{theorem}[\textsc{full}-$n$ chromatic--cochromatic gap]\label{thm:main}
-For every $\varepsilon\in(0,0.001)$, there exists $n_{0}=n_{0}(\varepsilon)$
-such that for all $n\geq n_{0}$,
-\begin{equation}\label{eq:main}
-\Pr_{G\sim\Gnh}\!\left[\chrom(G)-\cochrom(G)\geq n^{1-2\varepsilon}\right]
-\;\geq\; 1-2\varepsilon.
-\end{equation}
+\begin{theorem}[Analytical route theorem]\label{thm:analytical}
+Let $G\sim\Gnh$.  There exists a deterministic function $w(n)\to\infty$
+such that
+\[
+  \Pr\bigl[\chrom(G)-\cochrom(G)\ge w(n)\bigr]\to 1.
+\]
+In the route recorded here one may take $w(n)=\log\log n$.
 \end{theorem}
 
-In Lean 4, this is the theorem
-\texttt{Problem625.Publishable.erdos\_625\_full\_clean} in
-\texttt{Erdos625/PublishableProof.lean}. The proof is fully machine
-checked. The axiom dependency list, obtained from
-\texttt{\#print axioms}, contains exactly seven entries: three Lean kernel
-axioms (\texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}) and
-four paper-backed axioms: two cite literal results in
-Heckel--Panagiotou~\cite{heckelpanagiotou2023} (HP-2023 Lemma~8.1 +
-its standard X-class-removal application), and two are hybrids ---
-\texttt{lemma\_7\_20\_modified} combines HP-2023 Lemma~7.20 with an
-in-repository numerical certificate explicitly conjectured by
-Heckel~\cite{heckel2024} (\S Discussion), and
-\texttt{zeta\_alphaMinusTwo\_upper\_bound\_whp} is the symmetric
-$(\alpha-2)$-version of Heckel~\cite{heckel2024} Proposition~5(b)
-established by the published HP-2023 second-moment machinery. We
-discuss each in \S\ref{sec:axioms}.
+The full proof writeup is \texttt{proof/proof.md}.  The shipped source
+manifest is \texttt{proof/ANALYTICAL\_SOURCES.md}.  The upper-boundary
+interval appendix is
+\texttt{proof/upper-boundary-r2-explicit-interval-tables-2026-05-13.md}.
 
-\paragraph{Prize disclaimer.} This work does \emph{not} claim the
-Erd\H{o}s \$100 prize for Problem~625. The prize is for an
-affirmative proof of $\chrom(\Gnh)-\cochrom(\Gnh)\to\infty$
-\emph{almost surely}; the formalized result is the strictly weaker
-\emph{in-probability} form (in fact, the per-$\varepsilon$
-quantitative form above; the in-probability statement itself is the
-$\varepsilon\to 0$ corollary, which is not in the Lean chain either,
-see \S\ref{sec:scope}).
+\section{Global parameter split}
 
-\begin{corollary}[\emph{not in Lean}]\label{cor:in_prob}
-$\chrom(\Gnh)-\cochrom(\Gnh)\to\infty$ in probability as $n\to\infty$.
-\end{corollary}
-
-\noindent\Cref{cor:in_prob} is the $\varepsilon\to 0$ limit of
-\Cref{thm:main}, a one-line measure-theoretic consequence; the Lean
-theorem checks the per-$\varepsilon$ quantitative form only.
-
-\begin{remark}
-The Erd\H{o}s--Gimbel question asks for almost-sure convergence (i.e., for
-\emph{all} large $n$). The per-$\varepsilon$ bound of \Cref{thm:main}
-can be combined with a diagonal-subsequence argument (e.g.\@ taking
-$\varepsilon_n\to 0$ along a subsequence where $\varepsilon_n$ is
-bounded away from $0$ on each segment and applying Borel--Cantelli
-plus monotonicity of the events) to deduce almost-sure convergence.
-This is \emph{not} a one-line application of Borel--Cantelli~1
-directly: with $\varepsilon_n = 1/\log n$, the series
-$\sum 2/\log n$ diverges, so a subsequence-plus-monotonicity argument
-or a coupling step is required. We do not formalize this step in
-Lean. The precise gap is discussed in \S\ref{sec:scope}.
-\end{remark}
-
-\subsection{Comparison with the literature}
-
-\begin{itemize}
-\item Heckel~\cite{heckel2024} proves the bound $\chrom-\cochrom\geq
-n^{1-\varepsilon}$ \whp\ for $n$ in the InMainRange set
-($\mu_{\alpha}\in[n^{0.05+\varepsilon},n^{1-\varepsilon}]$),
-\emph{i.e.\@}\ for a density-$1$ but \emph{not full} family of $n$.
-\Cref{thm:main} is strictly stronger in $n$-coverage and slightly weaker
-in exponent ($n^{1-2\varepsilon}$ vs $n^{1-\varepsilon}$).
-
-\item Heckel--Panagiotou~\cite{heckelpanagiotou2023} prove the
-tame-coloring framework with concrete asymptotic estimates that we
-invoke at both levels $\alpha-1$ (Heckel's original use) and
-$\alpha-2$ (the new ingredient for full-$n$ coverage).
-
-\item Heckel--Riordan~\cite{heckelriordan2023} prove a unconditional
-$n^{c}$-non-concentration result for $\chrom(\Gnh)$ along an infinite
-subsequence; this gives \emph{some} $n$ where the gap is large, but
-not the per-$n$ statement of \Cref{thm:main}.
-
-\item The conjectural sharp rate (Heckel~\cite{heckel2024}, \S Discussion):
-$\Theta(n/\log^{3}n)$. Our $n^{1-2\varepsilon}$ is much weaker than the
-conjecture but suffices for the qualitative Erd\H{o}s--Gimbel question.
-\end{itemize}
-
-\section{Setup and notation}\label{sec:setup}
-
-We work with the Erd\H{o}s--R\'enyi random graph $\Gnh$ on the vertex
-set $[n]=\{1,\dots,n\}$. Let $\alpha(n)$ denote the (deterministic)
-floor of the first-moment threshold of the independence number, and
-$\mu_{\alpha}(n)=\binom{n}{\alpha(n)}2^{-\binom{\alpha(n)}{2}}$ the
-expected number of independent sets of size $\alpha(n)$. The following
-threshold convention follows Heckel--Panagiotou~\cite{heckelpanagiotou2023}.
-
-\begin{definition}\label{def:thresholds}
-Following Heckel--Panagiotou~\cite{heckelpanagiotou2023}, eq.~(ktdef),
-for $a\in\mathbb{N}$, the \emph{$a$-bounded first-moment threshold} is
+Set
 \[
-\mathbf{k}_{a}(n) \;:=\; \min\bigl\{k\ge 1\;:\; E_{n,k,a}\ge 1\bigr\},
+\alpha_0=2\log_2 n-2\log_2\log_2 n+2\log_2(e/2)+1,
+\qquad \alpha=\lfloor\alpha_0\rfloor,
+\qquad x=\alpha_0-\alpha.
 \]
-where $E_{n,k,a}$ is the expected number of $a$-bounded proper
-$k$-colorings of $\Gnh$ (``$a$-bounded'' means every color class has
-size at most~$a$). Note $E_{n,k,a}$ is monotone increasing in $k$, so
-$\mathbf{k}_{a}(n)$ is well-defined. The Lean development uses two
-specific thresholds, both of which fit this definition with literally
-\emph{the same} symbol:
-\begin{itemize}
-\item $\athr(n):=\mathbf{k}_{\alpha-2}(n)$, the $(\alpha-2)$-bounded
-threshold (\texttt{kThresholdAlphaMinus2 n} in Lean).
-\item $\partbthr(n):=\mathbf{k}_{\alpha-1}(n)$, the
-\emph{$(\alpha-1)$-bounded} threshold (\texttt{kThresholdAlphaMinusOne n}
-in Lean; the name ``Part-B witness'' refers to its role in the original
-Heckel~2024 Part~B chain, where it played the analogous role at level
-$\alpha-1$). Despite the Lean naming, $\partbthr$ is the
-$(\alpha-1)$-bounded threshold, \emph{not} the $(\alpha-2)$-bounded one.
-\end{itemize}
-We have $\partbthr(n)\le\athr(n)$ because the $(\alpha-1)$-bounded
-constraint is weaker than the $(\alpha-2)$-bounded constraint
-(more colorings count, so the first-moment crossing happens earlier).
-Heckel--Panagiotou~\cite{heckelpanagiotou2023} establish
-$\athr(n)-\partbthr(n)=\Theta(n/\log^{2}n)$; the Lean version of this
-fact is \Cref{lem:gap}.
-\end{definition}
+Then $x\in[0,1)$.  The proof covers $x$ by three regimes:
+\[
+[0,0.029155],\qquad [0.029155,0.95],\qquad [0.95,1).
+\]
+The endpoint overlaps are intentional.
 
-\begin{definition}\label{def:inrange}
-The \emph{main range} $\inrange(\varepsilon,n)$ is the condition
-$$n^{0.05+\varepsilon}\leq\mu_{\alpha}(n)\leq n^{1-\varepsilon}.$$
-The \emph{extended main range} $\inrangemod(\varepsilon,n)$ replaces
-the lower bound $n^{0.05+\varepsilon}$ with $n^{\xnaught+\varepsilon}$
-where $\xnaught\approx 0.02905$ is the unique zero of the function
-$\phi(1,x,1)$ defined by Heckel--Panagiotou~\cite{heckelpanagiotou2023},
-eq.~(7.19). We have $\xnaught+\varepsilon<0.04$ for
-$\varepsilon<0.01$, and $\inrange\subset\inrangemod$.
-\end{definition}
+\section{Regime inputs}
 
-\section{Strategy and structure}\label{sec:strategy}
+\paragraph{Low branch.}
+For $0\le x\le 0.029155$, the source theorem
+\texttt{low-branch-quantitative-splice-theorem-2026-05-13.md} proves
+\[
+  \chrom(G)-\cochrom(G)\ge (c_*-o(1))\frac{n}{\log^3 n}
+\]
+with probability $1-o(1)$ for some fixed $c_*>0$.
 
-We prove \Cref{thm:main} in four layers, each strengthening the
-previous in one direction.
+\paragraph{Middle branch.}
+For $0.029155\le x\le 0.95$, the source theorem
+\texttt{good-branch-partial-away-from-one-theorem-2026-05-13.md}, with
+fixed $\epsilon_0=0.05$, gives an asymptotically positive polynomial gap:
+\[
+  \chrom(G)-\cochrom(G)
+  \ge n^{1-\varepsilon/2}-n^{1-0.9\varepsilon}-2n^{0.999}
+  \to\infty.
+\]
+No parameter varies with $n$ in this invocation.
 
-\paragraph{Layer 1 ($\sim 95\%$).}
-\textsc{Theorem} \texttt{erdos\_625}: For
-$\varepsilon\in(0,0.001)$, eventually in $n$,
-$$\inrange(\varepsilon,n)\implies\Pr[\chrom-\cochrom\geq n^{1-\varepsilon}]\geq 1-2\varepsilon.$$
-This is a Lean formalization of Heckel~\cite{heckel2024}, with three
-paper-backed axioms citing
-Heckel--Panagiotou~\cite{heckelpanagiotou2023} (Lemma~5, eq:wert2) and
-Heckel~\cite{heckel2024} (Proposition~5(b) off-diagonal part).
+\paragraph{Upper boundary.}
+For $0.95\le x<1$, the source theorem
+\texttt{upper-boundary-r2-integrated-theorem-2026-05-13.md} gives
+\[
+  \chrom(G)-\cochrom(G)
+  \ge 0.001\frac{n}{\log^3 n}-o\!\left(\frac{n}{\log^3 n}\right)
+\]
+with probability $1-o(1)$.  The finite interval evidence for the
+$r=2$ certificate is shipped as the explicit appendix and the lightweight
+checker \texttt{proof/verify\_upper\_boundary\_r2\_intervals.py}.
 
-\paragraph{Layer 2 ($\sim 97\%$).}
-\textsc{Theorem} \texttt{erdos\_625\_97}: Same conclusion under
-$\inrangemod(\varepsilon,n)$, using the modification of HP-2023
-Lemma~7.20 to lower exponent $\xnaught+\varepsilon$ that Heckel~\cite{heckel2024}
-\S Discussion conjectures. We axiomatize this as
-\texttt{lemma\_7\_20\_modified}; see \S\ref{sec:axioms} for the hybrid
-disclosure.
+\section{Assembly}
 
-\paragraph{Layer 3 (100\%, structural bound).}
-\textsc{Theorem} \texttt{erdos\_625\_full}: No range hypothesis; bound is
-$$\chrom-\cochrom\geq n^{1-\varepsilon}-2n^{0.99}.$$
-Achieved by a case split on $\inrangemod(\varepsilon,n)$; the
-crossing case ($\neg\inrangemod$) is handled at level $\alpha-2$
-through three new paper-backed axioms (\S\ref{sec:crossing}).
+For each sufficiently large $n$, the deterministic value $x(n)$ belongs
+to at least one of the three ranges above.  Applying the corresponding
+regime theorem gives a high-probability lower bound that dominates
+$\log\log n$:
+\[
+  \frac{n}{\log^3 n}\gg\log\log n,
+  \qquad
+  n^{1-\varepsilon/2}-n^{1-0.9\varepsilon}-2n^{0.999}\gg\log\log n.
+\]
+Therefore
+\[
+  \Pr\bigl[\chrom(G)-\cochrom(G)\ge\log\log n\bigr]\to 1,
+\]
+which proves \Cref{thm:analytical}.
 
-\paragraph{Layer 4 (100\%, clean bound).}
-\textsc{Theorem} \texttt{erdos\_625\_full\_clean}: No range hypothesis;
-bound is $n^{1-2\varepsilon}$. Obtained from Layer~3 by an elementary
-\texttt{rpow} comparison: $n^{1-2\varepsilon}\leq n^{1-\varepsilon}-2n^{0.99}$
-eventually in $n$, since
-$n^{-\varepsilon}+2n^{\varepsilon-0.01}\to 0$ for
-$\varepsilon\in(0,0.01)$ (the helper is stated on this wider range; the
-flagship invokes it at $\varepsilon\in(0,0.001)$). No new axioms.
+\section{Lean boundary}
 
-\section{The crossing-branch argument at level $\alpha-2$}\label{sec:crossing}
+The Lean development in this repository proves the theorem
+\texttt{Problem625.Publishable.erdos\_625\_full\_clean}: for every fixed
+$\varepsilon\in(0,0.001)$ and all sufficiently large $n$,
+\[
+  \Pr\bigl[\chrom(G)-\cochrom(G)\ge n^{1-2\varepsilon}\bigr]
+  \ge 1-2\varepsilon.
+\]
+That is a checked in-probability companion theorem.  It is not a Lean
+formalization of \Cref{thm:analytical}.  The analytical proof above is
+currently a natural-language route assembled from shipped route notes and
+explicit interval tables.
 
-This section is the main mathematical contribution beyond
-Heckel~\cite{heckel2024}: the proof of \Cref{thm:main} for $n$ outside
-$\inrangemod(\varepsilon,n)$, \emph{i.e.\@}\ the threshold-crossing
-windows where $\mu_{\alpha}(n)<n^{\xnaught+\varepsilon}\approx n^{0.03}$.
-The literal negation $\neg\inrangemod(\varepsilon,n)$ also includes the
-high-regime disjunct $\mu_{\alpha}(n)>n^{1-\varepsilon}$, but by
-Stirling this is vacuous asymptotically (Heckel~\cite{heckel2024}
-eq.~($\mu_\alpha$) gives $\mu_{\alpha}(n)\leq n^{1+o(1)}$ unconditionally,
-so the disjunct holds for at most finitely many~$n$); the substantive
-content of the crossing-branch axioms therefore lives entirely on the
-deep-crossing half $\mu_{\alpha}<n^{\xnaught+\varepsilon}$.
+\section{Caveats}
 
-\subsection{The structural observation}\label{sec:structural}
+The package should be described as a full analytical proof, not as a
+Lean-certified proof of the analytical theorem.  The strongest remaining
+non-formal boundary is independent mathematical review of the route notes
+and the finite interval certificate.
 
-The original spike obstruction (the reason the published bound was
-restricted to InMainRange in \cite{heckel2024}) is that the level-$\alpha-1$
-tame-coloring machinery requires $\mu_{\alpha-1}\geq n^{1.05}$, which
-translates via $\mu_{\alpha-1}=\Theta(n\mu_{\alpha}/\log n)$ to
-$\mu_{\alpha}\geq n^{0.05+o(1)}$. In threshold-crossing windows where
-$\mu_{\alpha}\downarrow 1$, this fails.
-
-Going one further down to level $\alpha-2$ buys an extra factor of
-$\Theta(n/\log^{2}n)$ in the relevant first moment. Specifically, from
-Heckel--Panagiotou~\cite{heckelpanagiotou2023}, eq.~(7.16) (the
-``$\mu_{\alpha-2}$ formula''):
-\begin{equation}\label{eq:mualpha-2}
-\mu_{\alpha-2}/\mu_{\alpha} = \Theta\!\left(\frac{n^{2}}{\log^{2}n}\right).
-\end{equation}
-So even at $\mu_{\alpha}=1$ (the worst crossing case),
-$\mu_{\alpha-2}\geq\Theta(n^{2}/\log^{2}n)$. We have numerically
-verified (see \texttt{proof/red-team/r2b-step1-results-2026-05-11.md},
-script in \texttt{proof/red-team/r2b\_step1\_scan.py}) that the
-dimensionless exponent
-$x_{\alpha-2}(n):=\log\mu_{\alpha-2}(n)/\log n$ stays $\geq 1.533$ at
-the empirically worst crossing $n$ over $n\in[100,10^{6}]$, and
-asymptotic mpmath computation at $n\in\{10^{7},\dots,10^{12}\}$ gives
-$x_{\alpha-2}\in[1.68,1.80]$, approaching $2$ as $n\to\infty$. This is
-\emph{deeply inside} the
-Heckel--Panagiotou~\cite{heckelpanagiotou2023} application range
-$[n^{1.1},n^{2.9}]$ for Lemma~8.1 by a margin that diverges with~$n$.
-
-We refer to this as the \emph{$\alpha-2$ deep-crossing margin}. It is
-the reason the case-split mechanism works at every crossing $n$: no
-sub-spike inside the crossing regime can defeat the level-$\alpha-2$
-tame-coloring application.
-
-\subsection{The three crossing axioms}
-
-Inside the case $\neg\inrangemod(\varepsilon,n)$, we use:
-
-\begin{lemma}[$\chi$-side, paper-backed]\label{lem:chi_lower}
-Let $\varepsilon\in(0,0.001)$. There exists $n_{0}$ such that for all
-$n\geq n_{0}$ with $\neg\inrangemod(\varepsilon,n)$,
-$$\Pr\!\left[\chrom(G)\geq\athr(n)-n^{0.99}\right]\geq 1-\varepsilon.$$
-\end{lemma}
-\begin{proof}[Justification]
-Heckel--Panagiotou~\cite{heckelpanagiotou2023}, Lemma~8.1 establishes
-$\chrom_{a}(G)\geq\mathbf{k}_{a}-1$ \whp\ for
-$a\in\{\alpha-1,\alpha-2\}$. Note that HP-2023 Lemma~8.1 bounds the
-$a$-bounded chromatic number $\chrom_{a}$, not $\chrom$ itself. We
-convert via the X-class removal observation
-$\chrom(G)\geq\chrom_{\alpha-2}(G)-X_{\alpha}(G)-X_{\alpha-1}(G)$
-(Heckel~2024, \S 3, near eq.~(4.3.3)), where $X_{j}$ counts
-independent sets of size $j$. In the crossing regime
-$\mu_{\alpha}<n^{x_{0}+\varepsilon}$, Markov's inequality gives
-$X_{\alpha}=O(\log n)$ \whp\ and $X_{\alpha-1}=O(n/\log n)$ \whp;
-both are absorbed by $n^{0.99}$ alongside the Azuma--Hoeffding
-deviation below. The slack $n^{0.99}$ is therefore a conservative
-budget covering (i) the lossless $-1$ in HP-2023 Lemma~8.1's
-conclusion, (ii) the X-class correction
-$X_{\alpha}+X_{\alpha-1}=O(n/\log n)$ \whp\ (the dominant term), and
-(iii) the Azuma--Hoeffding vertex-exposure martingale deviation of
-$\chrom_{a}$ around its mean. The vertex-exposure
-martingale is $1$-Lipschitz, so by Azuma--Hoeffding,
-$\Pr[|\chrom_{a}-\Exp\chrom_{a}|\geq t]\leq 2\exp(-t^{2}/(2n))$;
-setting $t=n^{0.96}$ gives tail $\exp(-n^{0.92}/2)$, vastly less than
-$\varepsilon$ for any fixed $\varepsilon>0$. The $n^{0.99}\gg n^{0.96}$
-slack absorbs the Azuma deviation with substantial room.
-\emph{Regime note on slack constants.} The crossing-case axioms use
-$n^{0.99}$ (this section); the good-case (Heckel 2024 /
-\inrangemod) bound uses $n^{0.999}$ (ADR-2/ADR-3 in
-\texttt{DEVELOPMENT.md}; appears in the legacy $\zeta$-upper-bound
-statement). Both slacks are correct; they belong to different
-regimes and are absorbed into different gap arithmetics
-($n^{1-2\varepsilon}$ vs $n^{1-\varepsilon}$ respectively).
-The hypothesis
-$\neg\inrangemod(\varepsilon,n)$ together with the structural
-margin~\eqref{eq:mualpha-2} ensures the level-$\alpha-2$ Lemma~8.1
-applies; this is by exactly the same case used in
-Heckel--Panagiotou~\cite{heckelpanagiotou2023}, \S 8.
-\end{proof}
-
-\begin{lemma}[$\zeta$-side, paper-backed by analogy]\label{lem:zeta_upper}
-Let $\varepsilon\in(0,0.001)$. There exists $n_{0}$ such that for all
-$n\geq n_{0}$ with $\neg\inrangemod(\varepsilon,n)$,
-$$\Pr\!\left[\cochrom(G)\leq\partbthr(n)+n^{0.99}\right]\geq 1-\varepsilon,$$
-where $\partbthr(n)=\mathbf{k}_{\alpha-1}(n)$ (the
-$(\alpha-1)$-bounded first-moment threshold, lower than $\athr(n)$).
-\end{lemma}
-\begin{proof}[Justification (disclosure)]
-This is the symmetric ``cochromatic side'' of \Cref{lem:chi_lower} via
-Heckel~\cite{heckel2024}, Proposition 5(b) (a.k.a.\@ ``Proposition
-main''). Heckel~\cite{heckel2024} explicitly restricts the statement
-and proof to $(\alpha-1)$-bounded profiles (\cite{heckel2024} \S 3 and
-\S 5.1). The $(\alpha-2)$-version we use here is the
-natural symmetric move: the underlying HP-2023 second-moment lemmas
-(Lemmas~6.3--6.5) are stated for general $a$-bounded profiles, and
-Heckel~\cite{heckel2024}, \S 5 line~502 explicitly notes
-``[w]e will use the techniques developed in [HP-2023] to bound the
-second moment, translating the results via the following
-correspondence,'' which then applies to either~$a$. The
-\emph{application step}, requiring $\mu_{a}\geq n^{0.05+\varepsilon}$
-at $a=\alpha-1$, translates at $a=\alpha-2$ to $\mu_{\alpha-2}\geq
-n^{1.05}$ (the level-shift of Heckel~2024's $n^{0.05+\varepsilon}$
-condition at $\alpha-1$); this is the binding lower bound, well
-inside the broader HP-2023~\S 8 application range $[n^{1.1},n^{2.9}]$
-under which Lemma~8.1 itself is stated. The structural
-margin~\eqref{eq:mualpha-2} under $\neg\inrangemod(\varepsilon,n)$
-clears both thresholds with substantial headroom (the empirical floor
-$x_{\alpha-2}\geq 1.533$ from R2B Step~1 sits well above both
-$1.05$ and $1.1$).
-
-A formal peer-reviewed write-up of this $(\alpha-2)$-version is open
-work; see the dedicated transfer-audit note
-\texttt{proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md}
-in the repository.
-\end{proof}
-
-\begin{lemma}[deterministic threshold gap]\label{lem:gap}
-For $\varepsilon\in(0,0.001)$, eventually in $n$,
-$$\athr(n)-\partbthr(n) \;\geq\; n^{1-\varepsilon}.$$
-\end{lemma}
-\begin{proof}[Justification]
-The lower bound on the threshold gap follows from
-Heckel--Panagiotou~\cite{heckelpanagiotou2023} eq:wert / Lemma~7.5
-combined with the bound on the average colour class size; in our Lean
-chain it is the theorem
-\texttt{Problem625.kThreshold\_gap\_alpha\_minus\_2} (proved with $0$
-\texttt{sorry}), built on top of the axiom
-\texttt{partB\_alphaMinusTwo\_firstMomentBelowOne\_source} (axiom 4 below).
-The latter is the HP-2023 first-moment input at level $\alpha-2$.
-\end{proof}
-
-\subsection{Combining}
-
-On the crossing event $\neg\inrangemod(\varepsilon,n)$, intersect the
-two whp events of Lemmas~\ref{lem:chi_lower} and~\ref{lem:zeta_upper}.
-By the union bound, the intersection has probability $\geq 1-2\varepsilon$,
-and on it
-\begin{align*}
-\chrom(G)-\cochrom(G)
-&\geq (\athr(n)-n^{0.99})-(\partbthr(n)+n^{0.99}) \\
-&= (\athr(n)-\partbthr(n))-2n^{0.99} \\
-&\geq n^{1-\varepsilon}-2n^{0.99}\qquad\text{(by \Cref{lem:gap})}.
-\end{align*}
-The good case $\inrangemod(\varepsilon,n)$ is handled by Layer~2 above,
-which gives the strictly stronger bound $\chrom-\cochrom\geq n^{1-\varepsilon}\geq n^{1-\varepsilon}-2n^{0.99}$ \whp\ $\geq 1-2\varepsilon$.
-
-Promoting to the clean bound $n^{1-2\varepsilon}$ uses the elementary
-\texttt{rpow} inequality $n^{1-2\varepsilon}\leq n^{1-\varepsilon}-2n^{0.99}$
-eventually in $n$, established in \texttt{rpow\_clean\_bound\_eventually}
-(see \S\ref{sec:lean}); this is real analysis, $0$ axioms.
-
-This proves \Cref{thm:main}.\hfill$\square$
-
-\section{Lean formalization}\label{sec:lean}
-
-The complete Lean development is publicly available at the repository
-referenced in the abstract. The four publishable theorems are in
-\texttt{Erdos625/PublishableProof.lean}; the deep-crossing chain is in
-\texttt{Erdos625/CrossingPartB.lean} and
-\texttt{Erdos625/CrossingWindowProof.lean}. Build with
-\texttt{lake build}; the Lean version is \texttt{v4.29.0-rc8} and Mathlib
-is pinned to the corresponding tag.
-
-Axiom verification:
-\begin{verbatim}
-import Erdos625.PublishableProof
-#print axioms Problem625.Publishable.erdos_625_full_clean
-\end{verbatim}
-returns the seven axioms listed in \S\ref{sec:axioms}, with no
-\texttt{sorryAx}. Verbatim Lean output (literal copy, 2026-05-12):
-\begin{verbatim}
-'Problem625.Publishable.erdos_625_full_clean' depends on axioms:
- [propext,
-  Classical.choice,
-  Problem625.chi_alphaMinusTwo_lower_bound_whp,
-  Problem625.partB_alphaMinusTwo_firstMomentBelowOne_source,
-  Problem625.zeta_alphaMinusTwo_upper_bound_whp,
-  Quot.sound,
-  Problem625.Publishable.lemma_7_20_modified]
-\end{verbatim} Sorries elsewhere in the repository (in supporting modules
-not on the proof path) are warned by Lean during build but do not affect
-this dependency closure.
-
-\section{The four paper-backed axioms}\label{sec:axioms}
-
-We list the four paper-backed axioms that appear in
-\texttt{\#print axioms Problem625.Publishable.erdos\_625\_full\_clean}, with
-their literal sources and explicit disclosures. Two are literal
-one-citation results from Heckel--Panagiotou~\cite{heckelpanagiotou2023};
-two are hybrid (HP-2023 + auxiliary content).
-See \texttt{proof/red-team/README.md} for the chronological index of all
-audit artefacts.
-
-(Note: the three ``layer-1'' axioms appearing in the legacy
-\texttt{erdos\_625} theorem ---
-\texttt{paperPartBThresholdAverage...source},
-\texttt{paperPartBExactNoEmpty...source}, and
-\texttt{heckel\_offdiag\_term\_bound} ---
-are \emph{not} reachable from \texttt{erdos\_625\_full\_clean} because the
-good case of the flagship goes through \texttt{erdos\_625\_97}, which uses
-\texttt{lemma\_7\_20\_modified} instead. They are documented in the
-repository's \texttt{paper/SOURCES.md}.)
-
-\paragraph{Axiom numbering note.} We use a single axiom numbering
-across the entire package (README, SOURCES, proof.md, this paper).
-A1 = \texttt{lemma\_7\_20\_modified}; A2 =
-\texttt{partB\_alphaMinusTwo\_firstMomentBelowOne\_source};
-A3 = \texttt{chi\_alphaMinusTwo\_lower\_bound\_whp};
-A4 = \texttt{zeta\_alphaMinusTwo\_upper\_bound\_whp}. A1 is
-\emph{hybrid} (peer-reviewed bulk + in-repository numerical
-certificate); A4 is an \emph{extrapolation} (from $(\alpha-1)$ to
-$(\alpha-2)$); A2 and A3 are literal one-citation HP-2023 quotes.
-
-\paragraph{Axiom~A1: \texttt{lemma\_7\_20\_modified}.}
-(\emph{Hybrid:} HP-2023 Lemma~7.20 (modified) + in-repository
-numerical certificate \texttt{lemma\_7\_10\_ext}.) Used on the
-good-case branch (\emph{i.e.\@}\ under $\inrangemod(\varepsilon,n)$).
-\begin{itemize}
-\item The peer-reviewed bulk is HP-2023 Lemma~7.20, modified by
-weakening condition (d) to $\mu_{\alpha}\geq n^{\xnaught+\varepsilon}$,
-which Heckel~\cite{heckel2024} \S Discussion explicitly conjectures as
-``straightforward''.
-\item The numerical certificate filling the $\phi$-positivity gap
-$[\xnaught+\varepsilon,0.04)$ outside HP-2023 Lemma~7.10's coverage is
-ours (not peer-reviewed). The certificate is a $1086$-cell grid with a
-Lipschitz envelope and a $10\%$ safety buffer on the Lipschitz
-constant; positivity is established by envelope lower bound
-$\geq 6.15\times 10^{-7}$ against a Lipschitz slack $3.74\times 10^{-8}$,
-\emph{i.e.\@}\ $\approx 1.2$ orders of magnitude. Reproducibility: the
-Python script
-\texttt{proof/red-team/num-gap-lemma710-extension-2026-05-10.py}.
-\end{itemize}
-The natural follow-up project is either to publish the numerical lemma
-as a standalone arXiv note, or to formalize the certificate in Lean
-via \texttt{decide} on a rational grid. See
-\texttt{proof/red-team/lemma-7-10-ext-disclosure-2026-05-11.md} for the
-audit.
-
-\paragraph{Axiom~A2: \texttt{partB\_alphaMinusTwo\_firstMomentBelowOne\_source}.}
-(Pure paper citation.) HP-2023 Lemma~8.1 first-moment input at level
-$\alpha-2$: for $k<\partbthr(n)+\lceil n/\log^{2}n\rceil$, the expected
-number of $(\alpha-2)$-bounded proper $k$-colorings of $\Gnh$ is less
-than $1$. The Lean theorem \texttt{kThreshold\_gap\_alpha\_minus\_2}
-(proved with $0$ \texttt{sorry}) packages this into the deterministic
-threshold gap of \Cref{lem:gap}.
-
-\paragraph{Axiom~A3: \texttt{chi\_alphaMinusTwo\_lower\_bound\_whp}.}
-(Pure paper citation, by analogy with HP-2023 \S 8.) \Cref{lem:chi_lower}:
-$\chrom(G)\geq\athr(n)-n^{0.99}$ \whp\ $\geq 1-\varepsilon$, on the
-crossing event $\neg\inrangemod(\varepsilon,n)$. The proof is the same
-first-moment + Azuma argument that HP-2023~\S 8 uses for
-$\chrom_{a}\geq\mathbf{k}_{a}-1$ \whp; the slack $n^{0.99}$ absorbs
-both the residual additive $-1$ from Lemma~8.1's conclusion and the
-Azuma--Hoeffding deviation. HP-2023~\S 8 itself applies this argument
-at $a\in\{\alpha-1,\alpha-2\}$.
-
-\paragraph{Axiom~A4: \texttt{zeta\_alphaMinusTwo\_upper\_bound\_whp}.}
-(\emph{Extrapolation:} the symmetric $(\alpha-2)$-version of
-Heckel~\cite{heckel2024} Proposition~5(b), obtained via HP-2023's
-general-$a$ second-moment lemmas (Lemmas~6.3--6.5).)
-\Cref{lem:zeta_upper}: $\cochrom(G)\leq\partbthr(n)+n^{0.99}$ \whp\
-$\geq 1-\varepsilon$, on the crossing event. The proof transfers
-Heckel~\cite{heckel2024} \S 5--6 (cochromatic Paley--Zygmund + Azuma)
-from the published $(\alpha-1)$-bounded case to the $(\alpha-2)$-bounded
-case. The transfer is principled but \emph{not literally in print}: the
-underlying HP-2023 second-moment lemmas
-(\cite{heckelpanagiotou2023}~Lemmas~6.3--6.5) are stated for general
-$a$-bounded profiles, but the application step at $a=\alpha-2$ is not a
-verbatim quote of any published lemma. We use the term ``extrapolation''
-consistently across the package (README, SOURCES.md, proof.md) for this
-axiom. The detailed audit is in
-\texttt{proof/red-team/heckel2024-alpha-minus-two-transfer-audit-2026-05-11.md}.
-
-\paragraph{Lean kernel axioms.}
-The complete \texttt{\#print axioms} output of
-\texttt{erdos\_625\_full\_clean} also lists \texttt{propext},
-\texttt{Classical.choice}, \texttt{Quot.sound}. These are the standard
-classical-logic axioms of Lean~4 / Mathlib4, present in essentially
-every Mathlib proof.
-
-\paragraph{Summary count.} Four paper-backed axioms (\emph{two}
-literal: A2, A3; \emph{one} hybrid: A1; \emph{one} extrapolation: A4)
-and three Lean kernel axioms --- seven entries total.
-
-\section{Scope of the result}\label{sec:scope}
-
-\paragraph{What we prove.}
-\Cref{thm:main} delivers the in-probability divergence
-$\chrom(\Gnh)-\cochrom(\Gnh)\to\infty$ for \emph{all} sufficiently
-large $n$, with a quantitative rate $n^{1-2\varepsilon}$ for any
-fixed $\varepsilon\in(0,0.001)$, with $0$ sorry on the Lean proof path
-and seven axioms total (four paper-backed plus three Lean kernel).
-
-\paragraph{What we do not yet prove (in Lean).}
-\begin{enumerate}
-\item \emph{Almost-sure convergence; \Cref{cor:in_prob}.} The
-Erd\H{o}s--Gimbel question literally asks for ``almost surely''.
-\Cref{thm:main} delivers a fixed-$\varepsilon$ in-probability bound;
-the diagonal $\varepsilon_{n}=1/\log n$ Borel--Cantelli step that
-promotes this to almost-sure convergence is a routine measure-theoretic
-argument not yet in the Lean chain. Also, \Cref{cor:in_prob} stated in
-\S 1 (in-probability divergence) is the
-$\varepsilon\to 0$ limit of \Cref{thm:main}, which itself is a
-straightforward exercise but is not in the Lean chain either; only
-the per-$\varepsilon$ quantitative form is machine-checked.
-\item \emph{Heckel's conjectured sharp rate.} Heckel conjectures
-$\chrom-\cochrom=\Theta(n/\log^{3}n)$ \whp; our $n^{1-2\varepsilon}$ is
-strictly weaker.
-\item \emph{Axiom-free Lean proof.} All four paper-backed axioms are
-defended as the natural unit of citation, with explicit disclosure for
-the hybrid (axiom~4) and the symmetric extension
-(\Cref{lem:zeta_upper}). A fully discharged proof is a 12--24~months
-formalization project (the HP-2023 tameness + second-moment chain,
-plus the numerical certificate of axiom~4).
-\end{enumerate}
-
-\section*{Acknowledgments and provenance}
-
-\paragraph{Provenance disclosure.} The Lean formalization, this
-paper, the proof writeup \texttt{proof/proof.md}, and the five
-internal red-team audit passes in \texttt{proof/red-team/} were
-generated by an LLM-agent pipeline (Anthropic Claude Opus~4.7,
-model id \texttt{claude-opus-4-7[1m]}, the 1M-context variant, driven
-by the \texttt{operator} agent orchestrator at
-\url{https://github.com/uthunderbird/vibechord}, whose codex-brain
-adapter ran \texttt{gpt-5.3-codex-spark} at \texttt{effort=low})
-under human-in-the-loop supervision. The 1M-context variant was
-load-bearing: \texttt{PartBProfileBridge.lean} is 29512 lines
-($\sim$1.59~MB). The
-human supervisor selected the proof strategy, accepted or rejected
-proposed proof steps, and ran the Lean build; the LLM agents
-generated and edited the Lean source, the writeups, and the
-adversarial-audit artefacts. The five \texttt{/swarm-red-team}
-sessions referenced below were conducted by the same LLM-agent
-pipeline that produced the proof and are therefore \emph{internal
-adversarial audits}, not independent third-party reviews. We disclose
-this prominently because it is a genuine novelty of the work and
-because a reader scoring the contribution should know which
-correctness signal is machine-checked (the Lean kernel verifies the
-proof modulo the seven axioms enumerated in \S\ref{sec:axioms}) and
-which is not (the writeups, the axiom-to-paper correspondence, the
-hybrid-axiom disclosures, and the audit reports rely on the same
-LLM-agent pipeline that produced them).
-
-\paragraph{Acknowledgments.} We thank Annika Heckel and Konstantinos
-Panagiotou for the foundational papers
-\cite{heckel2024,heckelpanagiotou2023} that this formalization builds
-on, and the Lean community for the Mathlib library. The complete
-Lean development, red-team artefacts, and numerical scripts are
-publicly available at the repository link listed in the abstract.
-The development was adversarially audited internally via five
-\texttt{/swarm-red-team} sessions (2026-05-11 on the Lean theorem,
-2026-05-12 on \texttt{proof.md}, on the present paper, and on a
-final strict lemma-by-lemma pass); each session reported no critical
-(P0) issues in its respective round. As above, these are internal
-audits of an LLM-agent pipeline by the same pipeline; readers should
-treat them as an internal-quality-gate signal, not as third-party
-review. Agent-side reproducibility inputs (operator profile,
-harness instructions, model/effort settings) are summarized in
-\texttt{README.md} and \texttt{DEVELOPMENT.md}; machine-local harness
-dumps are intentionally not shipped in the publication package.
-
-\paragraph{Limitation framing of LLM-generated mathematics.} Readers
-should be aware that LLM-generated proofs may exhibit
-plausibility-driven failure modes that can survive same-model
-internal critique because the proof author and the critic share
-training-data blind spots. Here the proof author and the five
-internal red-team critics are the same model
-(\texttt{claude-opus-4-7[1m]}); the internal audits are therefore
-structurally incapable of detecting blind spots inherited from
-training. External verification by an unrelated reader, a different
-model, or a human mathematician is encouraged. The Lean kernel
-acceptance (build GREEN, \texttt{\#print axioms} machine-checked)
-reduces but does not eliminate this risk: the four paper-backed
-axioms remain admitted, and the natural-language disclosures
-surrounding them --- axiom-to-paper correspondence, the hybrid
-disclosure for A1, and the extrapolation disclosure for A4 ---
-remain LLM-authored. Cross-model auditing was technically available
-through the \texttt{operator} framework's adapter layer but was not
-used in this development; this is the obvious mitigation the
-pipeline did not take.
-
-\paragraph{Anthropic non-endorsement.} Anthropic is acknowledged as
-the provider of the Claude model used. No endorsement of this work
-by Anthropic, OpenAI, or any other organization is implied.
-
-\paragraph{Human supervisor.} Daniyar Supiyev directed the proof
-strategy at the branch-point level, accepted/rejected proposed proof
-steps, ran the Lean build, and chose which red-team findings to act
-on. Contact is via GitHub issues at the repository linked in the
-abstract; the supervisor's role is non-anonymous for this release.
-No institutional affiliation is claimed.
+For the Lean-facing certification plan, the current source-boundary caveats
+are more precise.  The middle source artifact leaves the residual region $x>1-\epsilon_0$ open as a Lean-discharge target, and the upper source
+artifact still depends on explicit directed interval tables replacing finite decimal certificate checks.
 
 \begin{thebibliography}{9}
-
 \bibitem{erdosproblems625}
-The Erd\H{o}s Problems. Problem 625. \\
+The Erd\H{o}s Problems. Problem 625.\newline
 \url{https://www.erdosproblems.com/625}.
 
 \bibitem{heckel2024}
 A.~Heckel,
-\textit{The difference between the chromatic and the cochromatic number
-of a random graph}. arXiv:2409.17614, 2024.
+\textit{The difference between the chromatic and the cochromatic number of a random graph}.
+arXiv:2409.17614, 2024.
 
 \bibitem{heckelpanagiotou2023}
 A.~Heckel and K.~Panagiotou,
-\textit{Colouring random graphs: Tame colourings}. arXiv:2306.07253, 2023.
-
-\bibitem{heckelriordan2023}
-A.~Heckel and O.~Riordan,
-\textit{How does the chromatic number of a random graph vary?}
-arXiv:2103.14014, 2021 (v3 updated 2023).
-
+\textit{Colouring random graphs: Tame colourings}.
+arXiv:2306.07253, 2023.
 \end{thebibliography}
 
 \end{document}

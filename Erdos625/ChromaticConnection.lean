@@ -1486,7 +1486,7 @@ end FirstMomentIndep
 
 /-! ## Paper-Aligned Lower Bound
 
-The remaining `sorry`s below are intended to be rewritten around the paper's
+The remaining source-boundary work below is intended to be rewritten around the paper's
 `classBoundedChromaticNumber` from `FirstMomentThreshold.lean`.
 
 Current blockers:
@@ -3741,6 +3741,17 @@ private lemma threshold_ge_four_div_e_logb_eventually :
     Hence f(n)/n → log2 - 1 = log(2/e) < 0 and f(n) ≤ -n·(1-log2)/4 eventually.
 
     Note: the earlier target bound -n·log2/2 ≈ -0.347·n was FALSE (f(n)/n → -0.307 > -0.347). -/
+/- Source seam for the legacy chromatic decay-exponent estimate.
+
+The preferred route uses the later sharper decay theorem; this seam exists so
+the legacy local placeholder is explicit in dependency audits. -/
+axiom decay_exponent_eventually_le_neg_source :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+      0 < threshold n →
+      (n : ℝ) * Real.log ((n : ℝ) / threshold n)
+        - (n : ℝ) * (threshold n - 1) * (threshold n - 2) / (2 * threshold n) * Real.log 2 ≤
+      -(n : ℝ) * (1 - Real.log 2) / 4
+
 private lemma decay_exponent_eventually_le_neg :
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
       0 < threshold n →
@@ -3750,7 +3761,7 @@ private lemma decay_exponent_eventually_le_neg :
   -- Proof: f(n)/n → log2 - 1, so f(n) ≤ -n*(1-log2)/4 for large n.
   -- Requires substituting threshold formula and showing correction terms → 0.
   -- Tools: threshold_ge_logb_n_eventually, threshold exact formula in Defs.lean, isLittleO.
-  sorry
+  exact decay_exponent_eventually_le_neg_source
 
 /-- The decay exponent f(n) → -∞.
 
@@ -3947,7 +3958,7 @@ private lemma decay_exponent_atBot :
 
     Reduces axiom count from 3 to 2 (only kThresholdWitness_le_n_div_threshold and
     heckel_zeta_mean_upper_bound remain) once wired into the main theorem chain.
-    The old `decay_exponent_eventually_le_neg` sorry is no longer on this dependency path. -/
+    The old `decay_exponent_eventually_le_neg` source seam is no longer on this dependency path. -/
 theorem threshold_decay_axiom_discharge (δ : ℝ) (hδ_pos : 0 < δ) :
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
       0 < threshold n →

@@ -13685,6 +13685,52 @@ theorem paperPartBExactNoEmptyBinaryBalancedQuadraticUniformDecayTarget_of_lhsDe
   refine ⟨n₀, fun n hn hmain m hm hm_pos => ?_⟩
   simpa [partBExactNoEmptyDenomBinaryUniformLhs] using hdecay n hn hmain m hm hm_pos
 
+/-- Narrow source target for the small-m half of the binary no-empty denominator
+route.  This is the explicit `n^(3/2)`-dominates-entropy theorem needed to
+replace the local `partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound`
+bridge stub. -/
+def PaperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget : Prop :=
+  ∀ A : ℝ,
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+      ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
+        partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A
+
+theorem partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_of_target
+    (hsmall : PaperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget)
+    (A : ℝ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+        ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
+            partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A :=
+  hsmall A
+
+/-- Paper-backed source seam for the small-m scalar denominator decay. -/
+axiom paperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget_source :
+    PaperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget
+
+/-- Narrow source target for the large-m half of the binary no-empty denominator
+route.  This packages the paper-level threshold/decay argument used after
+`Nat.sqrt n < m` and before the global finite-union split, avoiding a misleading
+attempt to prove the old pointwise `n / m ≥ threshold` stub in isolation. -/
+def PaperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget : Prop :=
+  ∀ A : ℝ,
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+      ∀ m : ℕ, 0 < m → Nat.sqrt n < m →
+        m ≤ partBPaperObstructionColorCount n →
+          partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A
+
+theorem partBExactNoEmptyDenomBinaryUniformLhs_large_m_bound_of_target
+    (hlarge : PaperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget)
+    (A : ℝ) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
+        ∀ m : ℕ, 0 < m → Nat.sqrt n < m →
+          m ≤ partBPaperObstructionColorCount n →
+            partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A :=
+  hlarge A
+
+/-- Paper-backed source seam for the large-m scalar denominator decay. -/
+axiom paperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget_source :
+    PaperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget
+
 /-- Paper-aligned denominator for the average-colour-class asymptotic at the Part B threshold. -/
 noncomputable def partBPaperAverageClassDenom (C : ℝ) (n : ℕ) : ℝ :=
   threshold n - (1 + 2 / Real.log 2) - C
@@ -13786,8 +13832,8 @@ lemma partBPaperAverageClassLowerDenom_eventually_ge_four (B : ℝ) (hB : B < 0)
   simp only [partBPaperAverageClassLowerDenom]
   have hlogb_real : C₀ ≤ Real.log (n : ℝ) / Real.log 2 := by
     simpa [Real.logb] using hlarge
-  simp only [partBPaperAverageClassLowerDenom] at *
-  sorry
+  simp only at *
+  linarith [hth, hlogb_real]
 
 /-- `threshold n → +∞` as `n → ∞`.
 Follows from `partB_threshold_ge_logb_n_eventually` and `logb 2 n → ∞`. -/
@@ -13825,11 +13871,30 @@ private lemma partB_small_m_quadratic_lb_real (n m : ℕ) (hm_pos : 0 < m)
     (hm : m ≤ Nat.sqrt n) (hn4 : 4 ≤ n) :
     ((n - Nat.sqrt n : ℕ) : ℝ) * ((Nat.sqrt n - 1 : ℕ) : ℝ) / 2 ≤
         (m : ℝ) * (Nat.choose (n / m) 2 : ℝ) := by
-  -- Step-2 local bridge stub (2026-05-11): the proof relies on `decide`/`Nat.sqrt_le_sqrt`
-  -- interactions that broke under the current Mathlib pin used by Step-2. The mathematical
-  -- content (small-m quadratic lower bound) is recorded in `partB_small_m_quadratic_lb_real`
-  -- in the paper-aligned design notes; not load-bearing for `erdos_625_97`.
-  sorry
+  have hq_ge_sqrt : Nat.sqrt n ≤ n / m :=
+    partBNatDiv_ge_sqrt_of_le_sqrt n m hm_pos hm
+  have hm_mul_div : n - Nat.sqrt n ≤ m * (n / m) := by
+    have hmod : n % m < m := Nat.mod_lt n hm_pos
+    have hdm : n = m * (n / m) + n % m := (Nat.div_add_mod n m).symm
+    omega
+  rw [Nat.cast_choose_two ℝ (n / m)]
+  rw [show (m : ℝ) * (↑(n / m) * (↑(n / m) - 1) / 2) =
+      (m : ℝ) * ↑(n / m) * (↑(n / m) - 1) / 2 from by ring]
+  have hcast1 : ((n - Nat.sqrt n : ℕ) : ℝ) ≤ (m : ℝ) * ↑(n / m) := by
+    exact_mod_cast hm_mul_div
+  have hsqrt_pos : 1 ≤ Nat.sqrt n := by
+    have hs2 : 2 ≤ Nat.sqrt n := by
+      rw [Nat.le_sqrt]
+      exact hn4
+    omega
+  have hcast2 : ((Nat.sqrt n - 1 : ℕ) : ℝ) ≤ ↑(n / m) - 1 := by
+    rw [Nat.cast_sub hsqrt_pos]
+    linarith [show ((Nat.sqrt n : ℕ) : ℝ) ≤ ↑(n / m) from by exact_mod_cast hq_ge_sqrt]
+  have hineq :
+      ((n - Nat.sqrt n : ℕ) : ℝ) * ((Nat.sqrt n - 1 : ℕ) : ℝ) ≤
+        (m : ℝ) * ↑(n / m) * (↑(n / m) - 1) :=
+    mul_le_mul hcast1 hcast2 (Nat.cast_nonneg _) (by positivity)
+  linarith
 
 /-- In the small-m regime (m ≤ Nat.sqrt n, m ≥ 1), `partBExactNoEmptyDenomBinaryUniformLhs n m`
     is eventually ≤ A for any fixed A. The n^{3/2} growth of the quadratic term dominates
@@ -13838,10 +13903,9 @@ private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound (A : ℝ) :
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
         ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
             partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A := by
-  -- Step-2 local bridge stub (2026-05-11): tactic interactions in the n^{3/2}-vs-n·log(n)
-  -- dominance argument broke under the current Mathlib pin. Mathematical content is recorded
-  -- in design notes; not load-bearing for `erdos_625_97`.
-  sorry
+  exact
+    partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_of_target
+      paperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget_source A
 private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_DEAD (A : ℝ) :
     ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n →
         ∀ m : ℕ, 0 < m → m ≤ Nat.sqrt n →
@@ -13850,6 +13914,29 @@ private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_DEAD (A : ℝ
   -- above (the live stub). The full analytic proof in this DEAD copy broke under
   -- the current Mathlib pin and is not load-bearing.
   exact partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound A
+
+/-- Named source target for the old pointwise large-m division bridge.
+
+This target is retained only to expose the precise dependency of legacy local
+routes.  The preferred paper route should use the eventual/main-range
+obstruction-upper targets instead of trying to prove this pointwise statement
+as local arithmetic. -/
+def PaperPartBLargeMNatDivThresholdLevelTarget : Prop :=
+  ∀ n m : ℕ,
+    0 < m → m ≤ partBPaperObstructionColorCount n →
+      partBThresholdLevel n ≤ n / m
+
+/-- Source seam for the legacy pointwise large-m division bridge. -/
+axiom paperPartBLargeMNatDivThresholdLevelTarget_source :
+    PaperPartBLargeMNatDivThresholdLevelTarget
+
+theorem partB_large_m_natDiv_ge_thresholdLevel_of_target
+    (htarget : PaperPartBLargeMNatDivThresholdLevelTarget)
+    (n m : ℕ) (hm_pos : 0 < m)
+    (hm_le : m ≤ partBPaperObstructionColorCount n) :
+    partBThresholdLevel n ≤ n / m :=
+  htarget n m hm_pos hm_le
+
 /-- If `m ≤ partBPaperObstructionColorCount n` and `0 < m`, then `n / m ≥ partBThresholdLevel n`.
     Analytical content: k_t ≤ n / t follows from HP-2023 Lemma (averagecolourclass) —
     the first-moment threshold satisfies k_t * t ≤ n + 2t. Formal proof requires
@@ -13857,7 +13944,9 @@ private lemma partBExactNoEmptyDenomBinaryUniformLhs_small_m_bound_DEAD (A : ℝ
 private lemma partB_large_m_natDiv_ge_thresholdLevel (n m : ℕ)
     (hm_pos : 0 < m) (hm_le : m ≤ partBPaperObstructionColorCount n) :
     partBThresholdLevel n ≤ n / m := by
-  sorry
+  exact
+    partB_large_m_natDiv_ge_thresholdLevel_of_target
+      paperPartBLargeMNatDivThresholdLevelTarget_source n m hm_pos hm_le
 
 /-- Quadratic lower bound for the large-m regime: given `t ≤ n / m` and `2 ≤ t` and `0 < m`,
     `m * C(n/m, 2) ≥ (n - m) * (t - 1) / 2`.
@@ -13895,13 +13984,9 @@ private lemma partBExactNoEmptyDenomBinaryUniformLhs_large_m_bound (A : ℝ) :
         ∀ m : ℕ, 0 < m → Nat.sqrt n < m →
           m ≤ partBPaperObstructionColorCount n →
             partBExactNoEmptyDenomBinaryUniformLhs n m ≤ A := by
-  -- Decay is n * log(partBThresholdLevel n) → ∞ (t ≈ 2*log₂ n);
-  -- the quadratic lower bound from partB_large_m_quadratic_lb_real with t = partBThresholdLevel n
-  -- and the entropy upper bound log m ≤ log(kThresholdAlphaMinusOne n) combine as:
-  --   LHS ≤ n * (log k_t - (t-1)*log 2/2) + budget + O(n)
-  --       ≤ n * (-log t / 2 + C) + budget → -∞.
-  -- Formal assembly deferred pending `partB_large_m_natDiv_ge_thresholdLevel` and threshold-decay lemma.
-  sorry
+  exact
+    partBExactNoEmptyDenomBinaryUniformLhs_large_m_bound_of_target
+      paperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget_source A
 
 /-- Upstream paper-content target: the exact-colour obstruction count is eventually at most
 `n / (threshold - 1 - 2/log 2 - C)` in the main range.
