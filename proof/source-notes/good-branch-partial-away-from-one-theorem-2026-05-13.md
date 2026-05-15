@@ -12,11 +12,22 @@ directory): a numerically certified Lipschitz envelope on a 2-cell grid
 establishing phi(1,x,1) > 0 on [0.029155, 0.04).  The certificate data is
 in `a1-certificates/a1_good_branch_certificate_x029155_to_1.csv`.
 
-The "old HP/Heckel source theorem" is HP-2023 Lemma 7.20 (`lemma:kstartame`,
-TameColourings.tex), which gives chi(G)-zeta(G)->infinity whp when
-mu_alpha >= n^{1.05}, i.e. x >= 0.05 (generously).  For x in [0.04, 1-epsilon_0]
-the lemma applies directly.  For x in [0.029155, 0.04) the A1 certificate
-provides the phi-positivity input that substitutes for the n^{1.05} condition.
+The "modified source theorem" used here is `lemma_7_20_modified` (the Lean axiom in
+`paper/SOURCES.md §A1`): it is HP-2023 Lemma 7.20 (`lemma:kstartame`, TameColourings.tex)
+with condition (d) weakened from mu_alpha >= n^{1.05} to mu_alpha >= n^{x_0+epsilon}
+(where x_0 ≈ 0.02905), following Heckel 2024 §Discussion's conjecture.
+
+Note: the original HP-2023 Lemma 7.20 requires mu_alpha >= n^{1.05}.  Since mu_alpha = n^{x+o(1)}
+and x < 1 throughout, the original n^{1.05} condition is NEVER satisfied.  All invocations
+here use `lemma_7_20_modified`, not the original lemma.
+
+For x in [0.04, 1-epsilon_0]: mu_alpha >= n^{0.04+o(1)} satisfies the weakened condition
+mu_alpha >= n^{x_0+epsilon} (since 0.04 > x_0 ≈ 0.02905), so `lemma_7_20_modified` applies
+directly without the A1 certificate.
+For x in [0.029155, 0.04): mu_alpha ~ n^{x+o(1)} with x < 0.04, so the weakened condition
+is not trivially satisfied.  The A1 certificate (`lemma_7_10_ext.md`) establishes phi(1,x,1) > 0
+on this interval, which is the geometric condition `lemma_7_20_modified` actually checks.
+Together, A1 certificate + `lemma_7_20_modified` close the interval [0.029155, 0.04).
 
 It does not claim to close the full good branch.  It isolates the remaining
 upper-boundary region where `x -> 1`.
@@ -98,9 +109,9 @@ chi(G)-zeta(G)
 
 ## Proof
 
-HP-2023 Lemma 7.20 (`lemma:kstartame`, TameColourings.tex) supplies the
-good-branch gap result for `x >= 0.04` (where mu_alpha >= n^{1.05} holds
-and the lemma's condition is satisfied).
+`lemma_7_20_modified` (HP-2023 Lemma 7.20 with weakened condition, see Purpose §above)
+supplies the good-branch gap result for `x >= 0.04` (where mu_alpha >= n^{0.04+o(1)}
+satisfies the weakened condition mu_alpha >= n^{x_0+epsilon}).
 
 The repaired A1 certificate (`lemma_7_10_ext.md`, a1-certificates/) supplies
 the phi-positivity condition for the handoff interval:
