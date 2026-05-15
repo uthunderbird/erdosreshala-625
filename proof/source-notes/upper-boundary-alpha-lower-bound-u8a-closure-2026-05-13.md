@@ -23,7 +23,7 @@ with probability `1-o(1)`.
 The required source inputs are:
 
 ```text
-1. HR 2023, Lemma k* in revised-arxiv.tex.
+1. Heckel & Riordan (2023) [arXiv:2103.14014], Lemma 26 (`lem:polylog`): threshold-location lemma giving `k_beta(n) = k^*(n) + O(log^2 n)` and the formula for `n/k^*(n)`.
 2. HR/HP one-more-colour derivative estimate.
 3. HP improved approximation for log E_{n,k,t}.
 4. First-moment threshold definition.
@@ -31,7 +31,7 @@ The required source inputs are:
 
 ## HR threshold-location input at beta=alpha
 
-HR Lemma `k*` assumes a function `beta(n)` satisfying, for some fixed
+Heckel & Riordan (2023) Lemma 26 (`lem:polylog`) assumes a function `beta(n)` satisfying, for some fixed
 `epsilon>0`,
 
 ```text
@@ -57,7 +57,7 @@ alpha - (alpha_0-1-2/log 2)
 It also satisfies the upper hypothesis trivially, and `alpha(n)` is
 piecewise constant in `n`.
 
-HR Lemma `k*` therefore gives a continuous threshold approximation
+Lemma 26 therefore gives a continuous threshold approximation
 `k^*(n)` such that:
 
 ```text
@@ -125,7 +125,7 @@ E_{n,boldk_alpha-2,alpha}
 The same argument applies at `a=alpha` because:
 
 ```text
-1. HR Lemma k* places boldk_alpha in the required threshold window;
+1. HR Lemma 26 places boldk_alpha in the required threshold window;
 2. the derivative lemma is stated for t=alpha_0-O(1), hence includes t=alpha;
 3. HP improved approximation is stated for t=alpha-O(1), hence includes
    t=alpha.
@@ -174,5 +174,4 @@ alpha-anchor route.
 
 ## Status
 
-`U8a` is closed, subject only to citing the HR and HP lemmas by their final
-publication identifiers.
+`U8a` is closed. HR Lemma 26 (`lem:polylog`, Heckel & Riordan 2023 [arXiv:2103.14014]) is cited by its arxiv lemma number; the HP improved approximation is HP-2023 (arXiv:2306.07253).

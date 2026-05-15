@@ -11,7 +11,10 @@ self-contained.
 
 | File | Role |
 |------|------|
-| `good-branch-partial-away-from-one-theorem-2026-05-13.md` | Source theorem for Regime II (`x in [0.029155, 0.95]`). Proves `chi(G)-zeta(G) -> infinity` using the HP/Heckel good-branch source theorem. |
+| `good-branch-partial-away-from-one-theorem-2026-05-13.md` | Source theorem for Regime II (`x in [0.029155, 0.95]`). Proves `chi(G)-zeta(G) -> infinity` using HP-2023 Lemma 7.20 (for `x >= 0.04`) and the A1 certificate (for `x in [0.029155, 0.04)`). |
+| `lemma_7_10_ext.md` | A1 numerical certificate (`lemma_7_10_ext`). Certifies phi(1,x,1) > 0 on `[0.029155, 0.04)` via a 2-cell Lipschitz envelope grid. Supports the middle branch for `x in [0.029155, 0.04)`. |
+| `a1-good-branch-certificate-table-schema-2026-05-12.md` | Schema for the A1 good-branch certificate table. |
+| `a1-certificates/` | Certificate data: `a1_good_branch_certificate_x029155_to_1.csv` (2-row grid), `a1_good_branch_certificate_x029155_to_1_summary.json`, `a1_good_branch_source_table_checker_summary.json`. |
 
 ## Upper branch
 
@@ -28,3 +31,16 @@ self-contained.
 | `upper-boundary-r2-c3-source-gate-adapter-2026-05-13.md` | C3 first-moment preservation adapter. |
 | `upper-boundary-r2-c5-active-profile-adapter-2026-05-13.md` | C5 active-profile adapter. |
 | `upper-boundary-r2-profitable-profile-bridge-g3-closure-2026-05-13.md` | Bridge to cochromatic upper bound (G3). Final assembly giving `zeta(G) <= boldk_alpha - 0.001 n/log^3 n`. |
+
+## Upper branch — C3/C5 logical dependencies
+
+These files are logical inputs cited by the C3 and C5 adapters above.
+
+| File | Role |
+|------|------|
+| `c5-active-profile-theorem-2026-05-12.md` | C5 active-profile theorem for P3 r=2/r=3 profiles. Closes the C5/P3 interface. Cited by the C5 adapter as "the available theorem." |
+| `r4-c5-source-table-2026-05-12.md` | R4 C5 source table. Maps each step of the C5 second-moment calculation to specific HP-2023 and Heckel 2024 lemmas. |
+| `c5-source-gate-closure-summary-2026-05-12.md` | C5 source-gate closure summary. Records that all source-table rows are closed. |
+| `r4-c3-first-moment-preservation-full-lemma-2026-05-12.md` | R4 C3 first-moment preservation: full lemma. Standalone lemma for C3 used in the C3 adapter. |
+| `p3-rounding-stability-room-prefix-lemma-2026-05-13.md` | P3 rounding stability for room and prefix. Supports the rounding stability step (U4). |
+| `p3-c3-source-gate-instantiation-2026-05-13.md` | P3 C3 source-gate instantiation. Instantiates the C3 lemma for the rounded P3 profile. |

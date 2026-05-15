@@ -1,0 +1,16 @@
+{
+  "accepted_row_count": 2,
+  "coverage_ok": true,
+  "covered_right": "1",
+  "csv_path": "../../problems/625/work/certificates/a1_good_branch_certificate_x029155_to_1.csv",
+  "gaps": [],
+  "gate_closed": true,
+  "phi_lower": "6.564303795169942231514054623108995203328894965534666764593067259038054377353167609526E-7",
+  "required_left": "0.029155",
+  "required_right": "1",
+  "row_count": 2,
+  "source_refs": [
+    "TameColourings.tex lemma:checksle3 Case 1; a1-hp-heckel-source-transcription-partial-2026-05-12.md",
+    "a1-phi-interval-certificate-x029155-to-004-summary-2026-05-12.md; a1-hp-heckel-source-transcription-partial-2026-05-12.md; a1-p3-splice-closure-theorem-2026-05-12.md"
+  ]
+}
