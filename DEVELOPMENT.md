@@ -395,9 +395,6 @@ accepted diff; difficult lemmas (e.g.,
   to these went through human read-through before commit);
 - **at the lemma level** for supporting modules
   (`CrossingPartB.lean`, `CrossingWindowProof.lean`,
-  `PartBAlphaMinusTwoFirstMomentAxiom.lean`,
-  `PartBAlphaMinusTwoFirstMomentBridge.lean`,
-  `CumulantAlphaMinusTwo.lean`,
   `GapArithmetic.lean`);
 - **at the build-passes level** for the large legacy module
   `PartBProfileBridge.lean` (29512 lines): the human supervisor

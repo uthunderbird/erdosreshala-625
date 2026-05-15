@@ -75,11 +75,8 @@ alternative chains or legacy routes); see `../paper/SOURCES.md`.
 
 | File | Contents |
 |------|----------|
-| `CrossingPartB.lean` | The two crossing whp axioms (`chi_alphaMinusTwo_lower_bound_whp`, `zeta_alphaMinusTwo_upper_bound_whp`) + the proved theorem `kThreshold_gap_alpha_minus_2` (deterministic threshold gap). |
-| `CrossingWindowProof.lean` | `KThresholdGapSource` exposed as a theorem deriving from the narrower first-moment axiom. |
-| `PartBAlphaMinusTwoFirstMomentAxiom.lean` | The narrowed first-moment axiom (HP-2023 Lemma 8.1 first-moment input at level $\alpha-2$). |
-| `PartBAlphaMinusTwoFirstMomentBridge.lean` | Bridge from the narrowed axiom to `kThreshold_gap_alpha_minus_2`. |
-| `CumulantAlphaMinusTwo.lean` | Supporting cumulant-side lemmas. |
+| `CrossingPartB.lean` | Axiom A2 (`partB_alphaMinusTwo_firstMomentBelowOne_source`), axioms A3+A4 (`chi_alphaMinusTwo_lower_bound_whp`, `zeta_alphaMinusTwo_upper_bound_whp`), cumulant-side lemmas, and the proved theorem `kThreshold_gap_alpha_minus_2` (deterministic threshold gap). |
+| `CrossingWindowProof.lean` | `KThresholdGapSource` exposed as a theorem deriving from the narrowed first-moment axiom A2. |
 
 ### Definitions and infrastructure (used by all theorems)
 
@@ -110,9 +107,8 @@ PublishableProof.lean   (flagship + 3 supporting theorems)
   │     ├── ZetaConcentration.lean     (Part C)
   │     └── GapArithmetic.lean         (gap inequalities)
   └── CrossingWindowProof.lean         (α-2 chain)
-        └── CrossingPartB.lean
-              └── PartBAlphaMinusTwoFirstMomentAxiom.lean
-                    └── PartBProfileBridge.lean (threshold defs)
+        └── CrossingPartB.lean         (axioms A2+A3+A4 + cumulant lemmas)
+              └── PartBProfileBridge.lean (threshold defs)
 
 Base infrastructure: Defs.lean, FirstMomentThreshold.lean, ColoringBasic.lean,
 BoundedDifferences.lean, IndepMoments.lean.
