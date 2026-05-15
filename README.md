@@ -43,6 +43,30 @@ and upper branch notes
 (same GitHub remote, `problems/625/work/notes/`) and are copied here for
 reader convenience.  This repository: `https://github.com/uthunderbird/erdosreshala-625`.
 
+## Proof strategy
+
+The proof tracks two graph parameters: the **chromatic number** χ(G) (minimum colors to properly color G) and the **cochromatic number** ζ(G) (minimum colors to partition vertices into cliques and independent sets). The key insight is that χ(G) and ζ(G) each concentrate near their own first-moment thresholds, and those thresholds are provably far apart.
+
+**First-moment thresholds.** For a G(n,1/2) random graph, let
+
+```text
+α₀ = 2 log₂ n − 2 log₂ log₂ n + 2 log₂(e/2) + 1,   α = ⌊α₀⌋,   x = α₀ − α ∈ [0,1).
+```
+
+The chromatic number concentrates near k_α (the α-th first-moment threshold), while the cochromatic number concentrates near k_{α-1}. The gap χ − ζ is driven by the distance between these two thresholds, which depends on x.
+
+**Three-regime split.** The parameter x sweeps [0,1) as n varies. The proof splits on x because the mechanism producing the gap differs in each range:
+
+- **Regime I (x ≤ 0.029155, ~3% of n):** The "crossing" case, where the expected number of (α-2)-colorings is below 1. The (α-2)-bounded first-moment threshold k_{α-2} lies well above k_{α-1}, giving a deterministic gap k_{α-2} − k_{α-1} ≥ n^{1−ε}. A chromatic lower bound at k_{α-2} (HP-2023) and a cochromatic upper bound at k_{α-1} (Heckel 2024) then assemble to χ − ζ ≥ n^{1−2ε}.
+
+- **Regime II (0.029155 ≤ x ≤ 0.95, ~92% of n):** The "good branch," where a positivity condition φ(1,x,1) > 0 holds (HP-2023 Lemma 7.20, extended by an in-repository numerical certificate for x near 0.029155). This supports a profile-counting concentration argument giving χ − ζ → ∞.
+
+- **Regime III (x ∈ [0.95,1), ~5% of n):** The "upper boundary," where φ vanishes near x = 1. An explicit interval-arithmetic certificate (Room₂ ≥ 0.07 on [0.95,1]) recovers the gap.
+
+In all three regimes the gap eventually dominates log log n, so the deterministic choice w(n) = log log n witnesses the main claim.
+
+**What the Lean theorem proves.** The flagship Lean theorem `erdos_625_full_clean` formalizes the crossing case (Regime I, axioms A2+A3+A4) and the good-branch case (Regime II, axiom A1). It establishes the fixed-ε in-probability statement: for every fixed ε ∈ (0,0.001), eventually P[χ(G)−ζ(G) ≥ n^{1−2ε}] ≥ 1−2ε. The full analytical claim (w(n) = log log n, convergence in probability) is not yet Lean-certified; see §Lean boundary below.
+
 ## Main files
 
 | Path | Role |
