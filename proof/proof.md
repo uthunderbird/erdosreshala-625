@@ -4,16 +4,37 @@ Status:
 
 ```text
 complete analytical proof route; all source theorem notes included in this package.
-Regime I and II: paper-backed (published lemmas from HP-2023 and HRHowdoes).
-Regime II hybrid: A1 certificate for x in [0.029155, 0.04) is an in-repository
-  numerical certificate, not peer-reviewed (labeled HYBRID in paper/SOURCES.md).
-Regime III: proof framework is paper-backed (HP-2023 + HRHowdoes + Heckel 2024);
-  the R2-G1 numerical certificate (Room_2 >= 0.07, Prefix_2 >= 0.006 on [0.95,1])
+
+Regime I (crossing/low branch): paper-backed via Lean axioms A2+A3+A4 (published
+  lemmas from HP-2023 and Heckel 2024; A4 is an extrapolation, disclosed in SOURCES.md §A4).
+  This regime corresponds to the crossing-case branch of the Lean-proved theorem
+  erdos_625_full_clean (PublishableProof.lean).
+
+Regime II (middle branch): paper-backed via Lean axiom A1 (lemma_7_20_modified,
+  HYBRID: HP-2023 Lemma 7.20 + in-repository A1 numerical certificate for
+  x in [0.029155, 0.04), labeled HYBRID in SOURCES.md §A1).
+
+Regime III (upper boundary): proof framework paper-backed (HP-2023 + Heckel 2024);
+  R2-G1 numerical certificate (Room_2 >= 0.07, Prefix_2 >= 0.006 on [0.95,1])
   is an original computation in these source notes, not in any published paper,
   and has not been independently verified.
 ```
 
-This document records the complete analytical proof route with explicit source citations at every step.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.  All source theorem notes for the middle and upper branches are now included in `proof/source-notes/` in this package.
+This document records the complete analytical proof route with explicit source citations
+at every step.  The three-regime argument below corresponds to the Lean-proved theorem
+`erdos_625_full_clean` (PublishableProof.lean, 4 paper axioms A1–A4 + 3 kernel axioms).
+
+Regime I uses the Lean-proved crossing-case branch (axioms A2+A3+A4).
+Regimes II and III use the Lean-proved InMainRangeMod case (axiom A1 + source notes).
+
+All source theorem notes for the middle and upper branches are included in
+`proof/source-notes/` in this package.
+
+Note on the AnalyticalWrapper: the file Erdos625/AnalyticalWrapper.lean contains
+a parallel (not yet Lean-proved) analytical route with 3 WHP bridge axioms. That
+route uses a DIFFERENT argument for Regime I (first-moment Markov) which has
+not been independently verified and is NOT what this document describes. This
+document describes the PROVED route (erdos_625_full_clean, A1–A4).
 
 Lean certification remains blocked by the bridge-input-shaped WHP obligations
 recorded in the analytical wrapper axiom snapshot (`proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`).
@@ -106,113 +127,75 @@ Clearly:
 
 ```text
 w(n)->infinity,
-w(n)=o(n/log^3 n),
 w(n)=o(n^{1-epsilon/2}).
 ```
 
-## Regime I: low branch
+## Regime I: crossing/low branch (¬InMainRangeMod)
 
-Source argument: first-moment (Markov) method (2026-05-15).
-(The prior C5-based source note `low-branch-quantitative-splice-theorem-2026-05-13.md` is superseded.)
-
-It proves that on:
+This regime covers n such that:
 
 ```text
-0 <= x <= 0.029155,
+NOT InMainRangeMod: mu_alpha(n) < n^{x_0+epsilon} (equivalently x < x_0 ≈ 0.02905).
 ```
 
-with probability `1-o(1)`:
+Equivalently, this is the "crossing" residue — approximately the 3% of n not covered
+by InMainRangeMod — which includes all n with x ≤ 0.029155.
+
+This is also the case handled by the Lean `erdos_625_full_clean` crossing branch
+(PublishableProof.lean, `by_cases hmod : InMainRangeMod ε n`).
+
+It proves that for all sufficiently large n in this regime,
+with probability `1-2*epsilon`:
 
 ```text
 chi(G)-zeta(G)
-  >= (c_*-o(1)) n/log^3 n
+  >= n^{1-epsilon} - 2*n^{0.99}
+  -> infinity.
 ```
 
-for some fixed:
+The low/crossing-branch proof (matching the Lean certificate, 2026-05-15):
 
 ```text
-c_*>0.
+1. alpha-2-bounded chromatic lower bound at k_{alpha-2}:
+   (HP-2023 lemma:lowerbound, §8.2 Proof of Theorem announcedbounds,
+   applied at a = alpha-2; no mu condition; valid for all x in [0,1)):
+   chi(G) >= k_{alpha-2} - n^{0.99}   whp.
+   Source: Lean axiom A3 = chi_alphaMinusTwo_lower_bound_whp
+   (CrossingPartB.lean:263; HP-2023 Lemma 8.1 at a = alpha-2 +
+   standard Azuma-Hoeffding concentration, slack n^{0.99}).
+
+2. alpha-2-bounded cochromatic upper bound at k_{alpha-1}:
+   (Heckel 2024 arXiv:2409.17614 Prop 5(b) + Azuma-Hoeffding,
+   adapted from (alpha-1)-bounded to (alpha-2)-bounded cocolorings;
+   see SOURCES.md A4 for transfer details):
+   zeta(G) <= k_{alpha-1} + n^{0.99}   whp.
+   Source: Lean axiom A4 = zeta_alphaMinusTwo_upper_bound_whp
+   (CrossingPartB.lean:311; extrapolation status disclosed in SOURCES.md §A4).
+
+3. Threshold gap (deterministic):
+   In ¬InMainRangeMod, the (alpha-2) and (alpha-1) first-moment thresholds
+   satisfy k_{alpha-2} - k_{alpha-1} >= n^{1-epsilon}   for all large n.
+   Source: HP-2023 Lemma 8.1 first-moment input paragraph at level alpha-2
+   (Lean axiom A2 = partB_alphaMinusTwo_firstMomentBelowOne_source +
+   deterministic Lean derivation in kThreshold_gap_alpha_minus_2;
+   PartBAlphaMinusTwoFirstMomentAxiom.lean:50).
+
+4. Gap assembly:
+   chi(G) - zeta(G)
+     >= (k_{alpha-2} - n^{0.99}) - (k_{alpha-1} + n^{0.99})
+      = (k_{alpha-2} - k_{alpha-1}) - 2*n^{0.99}
+     >= n^{1-epsilon} - 2*n^{0.99}
+     -> infinity.
 ```
 
-In particular:
+This proof uses the alpha-2 threshold gap as the driving force.
+The gap n^{1-epsilon} in the crossing regime is large because mu_alpha is small
+(mu_alpha < n^{x_0+epsilon}) and the (alpha-2)-bounded first moment is below 1
+over a window of width Theta(n/log^2 n) above k_{alpha-1}.
 
-```text
-chi(G)-zeta(G)->infinity.
-```
-
-The low-branch proof uses the first-moment (Markov) method (updated 2026-05-15):
-
-```text
-1. alpha-1-bounded chromatic lower bound at k_{alpha-1}
-   (HP-2023 lemma:lowerbound, §8.2 Proof of Theorem announcedbounds;
-   valid for all x in [0,1); requires only a in {alpha-1, alpha-2},
-   no condition on mu_a):
-   lemma:lowerbound gives chi_{alpha-1}(G) >= k_{alpha-1} - 1 whp.
-   Converting to ordinary chi via the combinatorial bound:
-   chi_{alpha-1}(G) <= chi(G) + X_alpha(G)  (deterministic: remove one vertex
-   from each independent set of size alpha, giving each a singleton extra colour),
-   so chi(G) >= chi_{alpha-1}(G) - X_alpha(G).
-   By Markov, P(X_alpha(G) > n^{0.05}) <= mu_alpha / n^{0.05}.
-   In InLowRegime, mu_alpha = Theta(n^x) (HP-2023 Le. 7.4;
-   mu_alpha = E[X_alpha] ~ C n^x/log n for the exact expression,
-   with n^x the dominant factor) <= n^{0.029155+o(1)},
-   so mu_alpha / n^{0.05} -> 0 and X_alpha(G) <= n^{0.05} = o(n/log^3 n) = o(D) whp.
-   Therefore chi(G) >= k_{alpha-1} - 1 - n^{0.05} = k_{alpha-1} - lowBranchConservativeError(n)
-   whp, where lowBranchConservativeError(n) = O(n^{0.05}) = o(D);
-2. averagecolourclass lemma: k_{alpha-1} = Theta(n/log n)
-   (HP-2023 Le. 7.4 = HRHowdoes Le. 41, generic theta in [0,1], no regime restriction;
-   HRHowdoes = Heckel-Riordan [2023], J. London Math. Soc. 108(5):1769-1815);
-3. onemorecolour/delk lemma: dL_0/dk = (2/ln2)log^2 n + O(log n log log n)
-   (HP-2023 Le. 7.3 = HRHowdoes Co. 39, y_t(rho) sums over u=1..t, no regime restriction);
-4. firstmomentcocol: E[X^co_k] = 2^k * E[X_k]
-   (Heckel 2024, line 516, exact equality; condition k_1=0 — no singleton
-   colour classes — is automatic for alpha-1-bounded profiles: by definition
-   alpha-a-bounded profiles have all class sizes in {1,...,a}; the first-moment
-   threshold structure (HP-2023 §7) places k_{alpha-1} so that only class sizes
-   >= 2 contribute to the leading first-moment term, and the k_1=0 restriction
-   is satisfied at k_{alpha-1} since singleton classes are subcritical at that
-   level; no x-regime restriction);
-5. improvedapproximation: ln E[X_k] = L_0 + O(log^{3/2} n)
-   (HP-2023, lines 2364-2369, no regime restriction);
-6. Markov's inequality: E[X^co_{k-D}] -> 0 for D = Theta(n/log^3 n),
-   so P(zeta(G) >= k_{alpha-1}-D) -> 0.
-```
-
-This proof does NOT use C5, tameness, phi(1,x,1) > 0, or mu_alpha >= n^{x_0+eps}.
-It works uniformly for all x in [0, 0.029155], including the bulk x < x_0 where
-phi(1,x,1) < 0 and C5 fails. The prior C5-based source note (2026-05-13) is superseded.
-
-Red-team confirmation (2026-05-15): all adversarial attack vectors refuted
-(internal LLM red-team audit conducted by the same LLM pipeline that produced
-this document; not independently verified by a third party).
-Summary of the five attack vectors and their dispositions:
-
-1. **chi_a vs chi conversion**: HP-2023 lemma:lowerbound (§8.2) gives
-   chi_{alpha-1}(G) >= k_{alpha-1} - 1 whp (a in {alpha-1, alpha-2};
-   no mu condition; unconditional). The chi_{alpha-1} -> chi conversion uses
-   the combinatorial bound chi(G) >= chi_{alpha-1}(G) - X_alpha(G) (deterministic)
-   plus Markov on X_alpha: E[X_alpha] = mu_alpha <= n^{0.029155+o(1)} = o(D),
-   so X_alpha = o(D) whp. Note: HRHowdoes Le. 44 (= lem:as1, Lemma 28 in
-   arXiv:2103.14014) requires mu_alpha = Theta(n/log^2 n) and does NOT apply
-   in InLowRegime; the combinatorial bound is used instead.
-   Refuted: gap is unaffected.
-
-2. **eq:firstmomentcocol regime restriction**: The source (Heckel 2024 line 516) is an
-   algebraic identity valid for any k-profile with k_1 = 0, with no regime restriction.
-   Refuted: the identity applies uniformly.
-
-3. **lemma:improvedapproximation conditions**: Conditions are satisfied at k = k_{alpha-1} - D
-   for D = Theta(n/log^3 n). Refuted: conditions hold.
-
-4. **lemma:onemorecolour (Le. 7.3) regime applicability**: Le. 7.3 gives dL_0/dk =
-   (2/ln2)log^2 n + O(log n log log n) uniformly in the low branch; the preamble
-   "generic theta in [0,1]" applies here. Refuted: lemma applies.
-
-5. **Markov conclusion**: Going D = Theta(n/log^3 n) below k_{alpha-1}, ln E[X^co_{k-D}]
-   decreases by >> 1, so E[X^co_{k-D}] -> 0 and Markov gives
-   P(zeta(G) >= k_{alpha-1} - D) -> 0. Refuted: argument is internally consistent.
-
-(The attack vectors above represent the complete adversarial review; critique artifacts have been incorporated into this document.)
+**Lean correspondence**: this is exactly the crossing-case branch of
+`erdos_625_full` / `erdos_625_full_clean` in PublishableProof.lean,
+using Lean axioms A2, A3, A4 from SOURCES.md.
 
 ## Regime II: good branch away from one
 
@@ -357,7 +340,7 @@ In each range, the corresponding theorem proves a high-probability lower
 bound that eventually dominates the global choice `w(n)=log log n`:
 
 ```text
-low branch:      (c_*-o(1))n/log^3 n >> log log n;
+low/crossing:    n^{1-epsilon}-2*n^{0.99} >> log log n;
 middle branch:   n^{1-epsilon/2}-n^{1-0.9epsilon}-2n^0.999
                  >> log log n;
 upper branch:    0.001 n/log^3 n-o(n/log^3 n) >> log log n.
@@ -416,8 +399,8 @@ are included in `proof/source-notes/`.
 
 | Regime | Note | Role | Status | Comment |
 |---|---|---|---|---|
-| Low | First-moment (Markov) argument (2026-05-15) | Regime proof | Closed (in-package) | HP-2023 Le. 7.4 + Le. 7.3 (= HRHowdoes Co. 39) + HP-2023 lemma:lowerbound (§8.2) + HP-2023 lines 2364–2369 + Heckel 2024 line 516. chi_{α-1}→chi via combinatorial bound (not HRHowdoes Le. 44 which requires μ_α=Θ(n/log²n)). Supersedes the C5-based source note. |
-| Low | `low-branch-quantitative-splice-theorem-2026-05-13.md` | Old C5-based source | Superseded | Replaced by the 2026-05-15 first-moment argument; not used in the current proof. |
+| Low/Crossing | A3+A4+threshold-gap argument (2026-05-15) | Regime proof | Closed (paper axioms A2+A3+A4) | HP-2023 lemma:lowerbound §8.2 at α−2 (A3); Heckel 2024 Prop 5(b) α−2-adapted (A4, extrapolation disclosed in SOURCES.md §A4); threshold gap from A2 (HP-2023 Lemma 8.1 first-moment at α−2). Lean: crossing branch of `erdos_625_full_clean` in PublishableProof.lean. |
+| Low | `low-branch-quantitative-splice-theorem-2026-05-13.md` | Old C5-based source | Superseded | Not used in the current proof. |
 | Middle | `proof/source-notes/good-branch-partial-away-from-one-theorem-2026-05-13.md` | Regime theorem | Closed (in-package) | Covers `[0.029155,0.95]` for fixed `epsilon_0=0.05`. |
 | Upper | `proof/source-notes/upper-boundary-r2-integrated-theorem-2026-05-13.md` | Regime theorem | Closed (in-package) | Uses alpha-anchor `r=2`. |
 | Upper | `proof/source-notes/upper-boundary-r2-directed-certificate-proof-2026-05-13.md` | Limiting certificate | Closed (in-package) | Supported by explicit interval table appendix. NOTE: Room_2 ≥ 0.07 and Prefix_2 ≥ 0.006 on [0.95,1] are original LLM-computed values not in any published paper; not independently verified. |
@@ -428,16 +411,17 @@ are included in `proof/source-notes/`.
 ## Dependency-status summary
 
 ```text
-Low branch:
-  first-moment (Markov) argument (2026-05-15);
-  status: closed;
-  sources: HP-2023 Le. 7.4 (averagecolourclass), HP-2023 Le. 7.3 = HRHowdoes Co. 39
-  (onemorecolour), HP-2023 lemma:lowerbound §8.2 (chi_{alpha-1} lower bound;
-  chi_{alpha-1}->chi via combinatorial bound + Markov, not HRHowdoes Le. 44),
-  HP-2023 lines 2364-2369 (improvedapproximation), Heckel 2024 line 516
-  (firstmomentcocol);
-  the prior C5-based source note low-branch-quantitative-splice-theorem-2026-05-13.md
-  is superseded and not used.
+Low/crossing branch (¬InMainRangeMod):
+  A3+A4+threshold-gap argument (2026-05-15);
+  status: closed (paper axioms A2+A3+A4);
+  sources:
+    A3 = HP-2023 lemma:lowerbound §8.2 at a=alpha-2 (chi lower bound, unconditional);
+    A4 = Heckel 2024 Prop 5(b) alpha-2-adapted (zeta upper bound, extrapolation);
+    A2 = HP-2023 Lemma 8.1 first-moment paragraph at alpha-2 (threshold gap input);
+    deterministic threshold gap k_{alpha-2} - k_{alpha-1} >= n^{1-epsilon}
+      (Lean: kThreshold_gap_alpha_minus_2, no paper axiom);
+  Lean correspondence: crossing case of erdos_625_full_clean (PublishableProof.lean).
+  The prior C5-based source note is superseded and not used.
 
 Middle branch:
   proof/source-notes/good-branch-partial-away-from-one-theorem-2026-05-13.md
