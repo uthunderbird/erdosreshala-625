@@ -1286,60 +1286,6 @@ theorem zeta_azuma_lower_tail_bound :
 
 end AzumaConcentration
 
-/-! ## Factored Axiom: Mean Estimate for ζ -/
-
-section MeanEstimate
-
-/-!
-### Structure of the mean estimate
-
-`heckel_zeta_mean_upper_bound` is a proved theorem (proved by contradiction via Paley-Zygmund + Azuma lower tail; see below). Architecturally, it can also be derived
-from two more targeted axioms — `heckel_zeta_upper_tail` and `heckel_zeta_lower_tail` —
-via the layer decomposition E[ζ] = Σ_{k=1}^{n} P[ζ ≥ k]:
-
-- Lower block (k ≤ k_t − n^{1−ε/2}): P[ζ ≥ k] ≤ 1, contributing ≤ k_t − n^{1−ε/2}.
-- Middle block (k_t − n^{1−ε/2} < k ≤ k_t + n^{0.999}): ≤ n^{0.999} + n^{1−ε/2} terms, each ≤ 1.
-- Upper block (k > k_t + n^{0.999}): P[ζ ≥ k] small by `heckel_zeta_upper_tail`.
-
-The lower tail axiom `heckel_zeta_lower_tail` encodes that the cochromatic number
-concentrates near k_t from below (complementary to Part B for χ).
-
-Both axioms relate to the proof of Theorem 1 in Heckel (2024), arXiv:2409.17614,
-but neither is a verbatim consequence of Theorem 1 itself — see individual docstrings.
--/
-
-/-- **[AXIOM — ζ upper tail]**
-  The probability that ζ(G(n,1/2)) exceeds kThresholdWitness(n) + n^{0.999} is small.
-
-  This follows from Proposition 5(b) + Azuma-Hoeffding in Heckel (2024):
-  P(ζ(G) > k* + 2n^{0.999}) → 0, where k* = k_{α−1} − n^{1−ε/2} (eq. (azumabound) +
-  eq. (probbound)). The upper tail at k_t + n^{0.999} follows since k* < k_t.
-
-  Source: Heckel (2024), arXiv:2409.17614, proof of Theorem 1 (§3, Azuma argument).
--/
-axiom heckel_zeta_upper_tail (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
-    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      gnHalf n {G : SimpleGraph (Fin n) |
-        kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) < (cochromaticNumber G : ℝ)} ≤
-        ENNReal.ofReal ε
-
-/-- **[AXIOM — ζ lower tail]**
-  The probability that ζ(G(n,1/2)) is at most kThresholdWitness(n) − n^{1−ε/2} is small.
-
-  NOTE: Heckel (2024) does NOT prove this as a named result. The paper proves:
-  (1) P[ζ ≤ k*] > exp(−n^{0.99}) (Proposition 5(b) + Paley-Zygmund),
-  (2) ζ ≤ k* + 2n^{0.999} whp (Azuma-Hoeffding, eq. azumabound).
-  A lower tail P[ζ < k_t − n^{1−ε/2}] ≤ ε would require a separate argument
-  (e.g., Azuma from the mean). This axiom is NON-LOAD-BEARING in the main proof chain.
-
-  Source: Heckel (2024), arXiv:2409.17614, §3 (Azuma-Hoeffding, non-verbatim).
--/
-axiom heckel_zeta_lower_tail (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
-    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      gnHalf n {G : SimpleGraph (Fin n) |
-        (cochromaticNumber G : ℝ) <
-          kThresholdWitness n - (n : ℝ)^(1 - ε / 2)} ≤
-        ENNReal.ofReal ε
 
 /-! ## Paley-Zygmund Lower Bound for ζ
 
@@ -1951,59 +1897,7 @@ private lemma zeta_layer_decomposition (n : ℕ) :
     rw [hset, ENNReal.toReal_sum (fun G _ => measure_ne_top _ _), Finset.sum_filter]]
   simp only [Measure.real_def]
 
-/-- **ζ mean upper bound from the upper tail axiom via layer decomposition.**
 
-  From `heckel_zeta_upper_tail` alone, the three-block argument gives:
-
-  E[ζ] = Σ_{k=0}^{n-1} P[ζ > k]
-       ≤ ⌊k_t + n^{0.999}⌋ + (n − ⌊k_t + n^{0.999}⌋) · ε    [split at k_hi]
-       ≤ k_t + n^{0.999} + n · ε
-
-  This is a **weaker** bound than `heckel_zeta_mean_upper_bound` (which has `−n^{1−ε/2}`).
-  The tighter bound with `−n^{1−ε/2}` requires Heckel's direct first-moment calculation
-  and cannot be derived from tail probabilities alone.
-
-  The lower tail axiom `heckel_zeta_lower_tail` tells us ζ concentrates above k_lo
-  but does not tighten the mean upper bound below k_t.
-
-  **Proof status**: source seam — the correct achievable statement is E[ζ] ≤ k_t + n^{0.999} + n·ε,
-  but this is a weaker consequence than `heckel_zeta_mean_upper_bound`. The main theorem
-  uses `heckel_zeta_mean_upper_bound` directly as a proved theorem (not an axiom; 0 sorry).
--/
-/- Source seam for the architectural upper-tail-to-mean estimate.
-
-This is intentionally not load-bearing for the main zeta upper-bound route; the
-main theorem uses `heckel_zeta_mean_upper_bound`, which is proved separately in
-this file. -/
-axiom heckel_zeta_mean_bound_from_upper_tail_source
-    (h_upper : ∀ ε : ℝ, 0 < ε → ε < 1 →
-      ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-        gnHalf n {G : SimpleGraph (Fin n) |
-          kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) < (cochromaticNumber G : ℝ)} ≤
-          ENNReal.ofReal ε)
-    (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
-    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      ∫ G : SimpleGraph (Fin n), (cochromaticNumber G : ℝ) ∂(gnHalf n) ≤
-        kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) + n * ε
-
-theorem heckel_zeta_mean_bound_from_upper_tail
-    (h_upper : ∀ ε : ℝ, 0 < ε → ε < 1 →
-      ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-        gnHalf n {G : SimpleGraph (Fin n) |
-          kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) < (cochromaticNumber G : ℝ)} ≤
-          ENNReal.ofReal ε)
-    (ε : ℝ) (hε_pos : 0 < ε) (hε_lt : ε < 1) :
-    ∃ n₀ : ℕ, ∀ n : ℕ, n₀ ≤ n → InMainRange ε n →
-      ∫ G : SimpleGraph (Fin n), (cochromaticNumber G : ℝ) ∂(gnHalf n) ≤
-        kThresholdWitness n + (n : ℝ)^(999 / 1000 : ℝ) + n * ε := by
-  -- Mathematical note: the correct derivation gives E[ζ] ≤ k_hi_nat + (n - k_hi_nat)·ε
-  -- where k_hi_nat = ⌊kThresholdWitness n + n^{0.999}⌋ + 1, via splitting the layer sum.
-  -- The n·ε tail from h_upper must be bounded by n^{0.999} for the stated bound.
-  -- This requires InMainRange to bound n·ε ≤ n^{0.999} + (something small), which holds
-  -- only for specific ε-n relationships. The full derivation is pending.
-  exact heckel_zeta_mean_bound_from_upper_tail_source h_upper ε hε_pos hε_lt
-
-end MeanEstimate
 
 /-! ## Exponential Decay Lemma (proved) -/
 

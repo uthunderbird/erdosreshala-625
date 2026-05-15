@@ -18,7 +18,7 @@ Plus the three Lean kernel axioms: `propext`, `Classical.choice`, `Quot.sound`.
 ### A1. `lemma_7_20_modified` (hybrid)
 
 **Lean name**: `Problem625.Publishable.lemma_7_20_modified`
-**File**: `Erdos625/PublishableProof.lean:399` (line numbers as of 2026-05-12; may drift with future edits — locate by `grep -n '^axiom lemma_7_20_modified'`)
+**File**: `Erdos625/PublishableProof.lean:400` (line numbers as of 2026-05-16; may drift with future edits — locate by `grep -n '^axiom lemma_7_20_modified'`)
 
 **Sources**:
 - Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame
@@ -45,7 +45,7 @@ citation boundary. See `../DEVELOPMENT.md` ADR-11.
 ### A2. `partB_alphaMinusTwo_firstMomentBelowOne_source`
 
 **Lean name**: `Problem625.partB_alphaMinusTwo_firstMomentBelowOne_source`
-**File**: `Erdos625/PartBAlphaMinusTwoFirstMomentAxiom.lean:50` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom partB_alphaMinusTwo_firstMomentBelowOne_source'`)
+**File**: `Erdos625/CrossingPartB.lean:39` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom partB_alphaMinusTwo_firstMomentBelowOne_source'`)
 
 **Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, proof of
 Lemma 8.1, first-moment input paragraph ("by the definition of the first
@@ -64,7 +64,7 @@ citation boundary. See `../DEVELOPMENT.md` ADR-11.
 ### A3. `chi_alphaMinusTwo_lower_bound_whp`
 
 **Lean name**: `Problem625.chi_alphaMinusTwo_lower_bound_whp`
-**File**: `Erdos625/CrossingPartB.lean:263` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
+**File**: `Erdos625/CrossingPartB.lean:149` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
 
 **Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, Lemma 8.1
 ($\chi_a \ge \mathbf{k}_a - 1$ whp for $a \in \{\alpha-1, \alpha-2\}$),
@@ -84,7 +84,7 @@ LLM-authored. See `../DEVELOPMENT.md` ADR-11.
 ### A4. `zeta_alphaMinusTwo_upper_bound_whp` (extrapolation)
 
 **Lean name**: `Problem625.zeta_alphaMinusTwo_upper_bound_whp`
-**File**: `Erdos625/CrossingPartB.lean:311` (line numbers as of 2026-05-12; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
+**File**: `Erdos625/CrossingPartB.lean:166` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
 
 **Source**: Heckel (2024), arXiv:2409.17614, Proposition 5(b) +
 Azuma–Hoeffding, **adapted from $(\alpha-1)$-bounded to
@@ -159,8 +159,8 @@ to alternative proof routes explored during development:
   the publishable chain uses.
 
 **In `ZetaConcentration.lean`**:
-- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — alternative
-  $\zeta$ tail bound derivations; not used.
+- `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — removed (2026-05-16 cleanup);
+  were alternative $\zeta$ tail bound derivations, never in the publishable path.
 
 ## Analytical proof certificate disclosure
 

@@ -9,10 +9,6 @@
 -- completion gate.
 import Erdos625.PublishableProof
 import Erdos625.AnalyticalWrapper
-import Erdos625.LowBranchCertificate
-import Erdos625.LowBranchIntervalSkeleton
-import Erdos625.MiddleBranchCertificate
-import Erdos625.MiddleBranchIntervalSkeleton
-import Erdos625.UpperR2Certificate
-import Erdos625.UpperR2IntervalSkeleton
-import Erdos625.UpperR2IntervalOutput
+import Erdos625.LowBranch
+import Erdos625.MiddleBranch
+import Erdos625.UpperR2

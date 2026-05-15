@@ -178,7 +178,7 @@ The low/crossing-branch proof (matching the Lean certificate, 2026-05-15):
    Source: HP-2023 Lemma 8.1 first-moment input paragraph at level alpha-2
    (Lean axiom A2 = partB_alphaMinusTwo_firstMomentBelowOne_source +
    deterministic Lean derivation in kThreshold_gap_alpha_minus_2;
-   PartBAlphaMinusTwoFirstMomentAxiom.lean:50).
+   CrossingPartB.lean:39).
 
 4. Gap assembly:
    chi(G) - zeta(G)
