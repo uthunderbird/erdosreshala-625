@@ -2,7 +2,47 @@
 
 This file records the precise paper citations for the paper-backed axioms in
 the formalization of Erdős Problem 625, separated by which theorem they
-appear in.
+appear in. Each axiom entry specifies: the Lean name, the file location,
+the source paper(s), the status label (see §Axiom status labels), and the
+authorship of the axiom proposal. Lean kernel axioms (`propext`,
+`Classical.choice`, `Quot.sound`) are standard foundations and are not
+paper-backed.
+
+**Important**: All red-team passes and internal verification cited in this
+document were conducted by the same LLM pipeline that produced the
+formalization; no independent human or third-party verification of the
+axiom-citation alignment has been performed.
+
+## Notation and conventions
+
+The underlying probability space is $G(n,1/2)$ — the Erdős–Rényi random
+graph on $n$ vertices where each edge is included independently with
+probability $1/2$. **whp** ("with high probability") means probability
+tending to $1$ as $n \to \infty$. $\alpha \approx 2\log_2 n$ denotes the
+parameter at which $G(n,1/2)$ undergoes the chromatic number transition.
+$\chi_a$ denotes the $a$-bounded chromatic number (chromatic number using
+only colors $1,\ldots,a$). $\mathbf{k}_a(n)$ denotes the first-moment
+threshold at level $a$ — the largest $k$ for which the expected number of
+proper $k$-colorings of $G(n,1/2)$ using at most $a$ colors satisfies
+$E_{n,k,a} \ge 1$. $E_{n,k,a}$ is that expected count.
+
+## Axiom status labels
+
+The following status labels are used in axiom entries below:
+
+- **literal**: the axiom's statement is a direct transcription or narrow
+  instantiation of an explicitly stated result in the cited paper. No
+  extrapolation or supplementary argument is needed.
+- **literal + standard derivation**: the axiom combines a literal paper
+  result with a standard (textbook-level) derivation step (e.g., a Markov
+  inequality application). The derivation step is noted in the entry.
+- **HYBRID**: the axiom's statement combines a peer-reviewed paper claim
+  with an original (non-peer-reviewed) computation or certificate produced
+  by this project.
+- **EXTRAPOLATION**: the axiom's statement adapts a published result to a
+  parameter regime or setting not explicitly covered in the source paper,
+  via a symmetric or analogous argument. The adaptation is disclosed in
+  full in the entry.
 
 ## Flagship `erdos_625_full_clean` — 4 paper axioms
 
@@ -15,10 +55,22 @@ Running `#print axioms Problem625.Publishable.erdos_625_full_clean` returns:
 
 Plus the three Lean kernel axioms: `propext`, `Classical.choice`, `Quot.sound`.
 
+As of 2026-05-16, `#print axioms` returns exactly these 4 paper axioms and
+3 kernel axioms for `erdos_625_full_clean` — no additional non-kernel axioms
+are in the dependency closure.
+
+Build state: Lean 4 (leanprover/lean4), Mathlib4, build date 2026-05-16.
+The `#print axioms` output above was obtained from a full `lake build` on
+this date.
+
+Lean axiom statements are available in the linked repository; this document
+provides citations but does not reproduce the Lean declaration text.
+
 ### A1. `lemma_7_20_modified` (hybrid)
 
 **Lean name**: `Problem625.Publishable.lemma_7_20_modified`
 **File**: `Erdos625/PublishableProof.lean:400` (line numbers as of 2026-05-16; may drift with future edits — locate by `grep -n '^axiom lemma_7_20_modified'`)
+**GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Sources**:
 - Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame
@@ -42,10 +94,11 @@ Heckel 2024 §Discussion's explicit conjecture); numerical
 certificate script also LLM-authored. Human supervisor approved the
 citation boundary. See `../DEVELOPMENT.md` ADR-11.
 
-### A2. `partB_alphaMinusTwo_firstMomentBelowOne_source`
+### A2. `partB_alphaMinusTwo_firstMomentBelowOne_source` (literal)
 
 **Lean name**: `Problem625.partB_alphaMinusTwo_firstMomentBelowOne_source`
 **File**: `Erdos625/CrossingPartB.lean:39` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom partB_alphaMinusTwo_firstMomentBelowOne_source'`)
+**GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, proof of
 Lemma 8.1, first-moment input paragraph ("by the definition of the first
@@ -61,10 +114,11 @@ full Lemma 8.1 application).
 `KThresholdGapSource`). Human supervisor approved the narrower
 citation boundary. See `../DEVELOPMENT.md` ADR-11.
 
-### A3. `chi_alphaMinusTwo_lower_bound_whp`
+### A3. `chi_alphaMinusTwo_lower_bound_whp` (literal)
 
 **Lean name**: `Problem625.chi_alphaMinusTwo_lower_bound_whp`
 **File**: `Erdos625/CrossingPartB.lean:149` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
+**GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, Lemma 8.1
 ($\chi_a \ge \mathbf{k}_a - 1$ whp for $a \in \{\alpha-1, \alpha-2\}$),
@@ -85,6 +139,7 @@ LLM-authored. See `../DEVELOPMENT.md` ADR-11.
 
 **Lean name**: `Problem625.zeta_alphaMinusTwo_upper_bound_whp`
 **File**: `Erdos625/CrossingPartB.lean:166` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
+**GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Source**: Heckel (2024), arXiv:2409.17614, Proposition 5(b) +
 Azuma–Hoeffding, **adapted from $(\alpha-1)$-bounded to
@@ -109,7 +164,7 @@ approved by the human supervisor. See `../DEVELOPMENT.md` ADR-11.
 
 These supporting theorems use a different subset of axioms.
 
-### `erdos_625` (95% n) — 3 paper axioms
+### `erdos_625` (95% n — the InMainRange density-1 subset) — 3 paper axioms
 
 `#print axioms Problem625.Publishable.erdos_625` returns:
 
@@ -148,6 +203,17 @@ to alternative proof routes explored during development:
 - `paperPartBEndpointClosedVectorTailMomentQBoundedProductProfilePDenomAffineHalfLogSlackSmallClosedUniformAsymptoticNegOneStirlingFactorialUpperSplitAtBotTarget_source`
   — alternative Stirling-endpoint discharge route for Part B; not on
   the publishable path.
+- `paperPartBExactNoEmptyDenomBinaryUniformLhsSmallMDecayTarget_source`
+  — source seam for the small-m (m ≤ √n) scalar denominator decay
+  bound; legacy binary no-empty route, no callers on the publishable
+  path.
+- `paperPartBExactNoEmptyDenomBinaryUniformLhsLargeMDecayTarget_source`
+  — source seam for the large-m (m > √n) scalar denominator decay
+  bound; same legacy route, no callers on the publishable path.
+- `paperPartBLargeMNatDivThresholdLevelTarget_source` — source seam
+  for the legacy pointwise large-m division bridge (k_t ≤ ⌊n/m⌋);
+  superseded by the main-range obstruction-upper targets; no callers
+  on the publishable path.
 
 **In `ChromaticConnection.lean`**:
 - `threshold_tBoundedColoringError_le_with_error` — direct axiom form
@@ -157,6 +223,10 @@ to alternative proof routes explored during development:
 - `threshold_decay_axiom` — proved as a theorem
   (`threshold_decay_axiom_discharge`) and the proved version is what
   the publishable chain uses.
+- `decay_exponent_eventually_le_neg_source` — source seam for a legacy
+  chromatic decay-exponent estimate (asserting f(n) ≤ −n·(1−log 2)/4
+  eventually); consumed only by a private lemma in the same file, not
+  on any publishable path.
 
 **In `ZetaConcentration.lean`**:
 - `heckel_zeta_upper_tail`, `heckel_zeta_lower_tail` — removed (2026-05-16 cleanup);
@@ -176,7 +246,7 @@ This certificate, including the mean-solver enclosures (μ₀ ∈ [1.99,2.00],
 prefix guard evaluation at x=0.95, consists of **original computations in
 these source notes** (`proof/source-notes/upper-boundary-r2-directed-certificate-proof-2026-05-13.md`
 and `proof/source-notes/upper-boundary-r2-explicit-interval-tables-2026-05-13.md`).
-These specific numerical values do not appear in HP-2023, HRHowdoes, or
+These specific numerical values do not appear in HP-2023, Heckel–Riordan 2023, or
 Heckel 2024. The computation was generated by the same LLM pipeline that
 produced the rest of this package and has **not been independently verified
 by a third party**.
@@ -190,9 +260,10 @@ are not.
 
 - 2 of the 4 paper axioms in the flagship are HYBRID (A1) or
   EXTRAPOLATION (A4) of published results, not literal one-citation
-  facts. Both are explicitly disclosed.
+  facts. Both are explicitly disclosed: A1's disclosure is in the Lean docstring and an in-package audit note; A4's transfer audit is in the parent Erdosreshala repository work notes.
 - The other 2 paper axioms (A2, A3) are literal HP-2023 citations.
-- Five internal red-team passes verifying the disclosure framing are documented
+- At least five internal red-team passes verifying the disclosure framing are documented
   in the parent Erdosreshala repository work notes
   (https://github.com/uthunderbird/erdosreshala-625, subdirectory problems/625/work/notes/;
   conducted by the same LLM pipeline; see `../DEVELOPMENT.md` ADR-10 and ADR-12).
+- The R2-G1 numerical certificate (Room_2 ≥ 0.07, Prefix_2 ≥ 0.006) is an original LLM-computed value not in any published paper and not independently verified; see §Analytical proof certificate disclosure above.

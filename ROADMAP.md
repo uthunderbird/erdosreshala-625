@@ -1,9 +1,21 @@
 # Publication Roadmap
 
-This document tracks the state of the formalization and the path to a
+This document tracks the state of the formalization and the path toward a
 fully verified, peer-reviewable publication.
 
-**Last update**: 2026-05-15 (low-branch source revised to first-moment/Markov method; see §Analytical wrapper status).
+**Last update**: 2026-05-16 (low-branch source revised to first-moment/Markov method; see §Analytical wrapper status).
+
+---
+
+## Contents
+
+1. [Current state](#current-state)
+2. [Analytical wrapper status (not Lean-certified)](#analytical-wrapper-status-not-lean-certified)
+3. [Honest scope limitations](#honest-scope-limitations-carry-into-any-preprint)
+4. [Optional next-step projects](#optional-next-step-projects)
+5. [Build prerequisites and reproducibility](#build-prerequisites-and-reproducibility)
+6. [Paper length note](#paper-length-note)
+7. [Disclosure summary](#disclosure-summary)
 
 ---
 
@@ -16,35 +28,35 @@ fully verified, peer-reviewable publication.
 | `erdos_625_full` | ✅ proved | $100\%$ n, bound $n^{1-\varepsilon}-2n^{0.99}$ | 4 paper + 3 kernel |
 | **`erdos_625_full_clean`** | ✅ proved | $\boldsymbol{100\%}$ n, bound $\boldsymbol{n^{1-2\varepsilon}}$ | 4 paper + 3 kernel |
 
-`lake build` GREEN (2925 jobs). `#print axioms erdos_625_full_clean`
+*Axioms A1 and A4 have disclosure caveats; see §Honest scope limitations below.*
+
+`lake build` GREEN (approximately 2925 jobs). `#print axioms erdos_625_full_clean`
 returns exactly the 7 entries; **0 `sorryAx` on the proof path** of
 `erdos_625_full_clean`.  The former non-reachable helper placeholders in
 `PartBProfileBridge.lean`, `ChromaticConnection.lean`, and
 `ZetaConcentration.lean` have been converted to named source seams tracked by
-source-axiom snapshots; they are not local proof placeholders. Five internal adversarial-audit passes (same
+source-axiom snapshots; they are not local proof placeholders. (A 'source seam' is a named axiom declaration tracking an admitted mathematical fact from a published paper; a 'local proof placeholder' is an internal `sorry` used during development. Source seams remain in the final build by design; sorry-based placeholders do not.) Five internal adversarial-audit passes (same
 LLM-agent pipeline; Lean theorem, `proof.md`, `paper/main.tex` ×2,
-strict lemma-by-lemma), all 0 P0 in their respective rounds. Per-axiom
-paper-correspondence audit 2026-05-12.
+strict lemma-by-lemma), all zero Priority-0 (blocking) in their respective rounds. A per-axiom paper-correspondence audit was performed on 2026-05-12 by the same LLM-agent pipeline.
 
 See [Disclosure summary](#disclosure-summary) below for prize, LLM
-provenance, and shared-blind-spot caveats; the full canonical
+provenance, and LLM-pipeline shared-blind-spot limitations (see §Disclosure summary); the full canonical
 disclosure stack is in `README.md` §Lean boundary and §Lemma and axiom source audit.
 
-## Analytical wrapper status
+## Analytical wrapper status (not Lean-certified)
 
 The repository now also includes `Erdos625.AnalyticalWrapper`, which exposes
 `Problem625.Analytical.erdos_625_full_analytical` as a Lean-facing
-dependency-closure interface for the full analytical route.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
+dependency-closure interface for the full analytical route.  Not Lean-certified (i.e., the Lean kernel has not verified this without admitted axioms): the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
 
 **2026-05-15 update**: The low-branch (Regime I, `x ∈ [0, 0.029155]`) source argument was revised from the C5-based source note (`low-branch-quantitative-splice-theorem-2026-05-13.md`) to the first-moment (Markov) method using HP-2023 Le. 7.4, Le. 7.3, Le. 8.1, HP-2023 lines 2364–2369, and Heckel 2024 line 516. The prior C5-based source is superseded and no longer used in the proof.
 
-The three bridge-input-shaped WHP obligations are the current Stage 2/Lean-certification
-blockers.  The recorded source-boundary caveats are that the middle source artifact
+The three bridge-input-shaped WHP obligations are the current Lean-certification blockers (the next formalization milestone after the current fixed-epsilon companion theorem). (Formalizing these obligations is not listed in §Optional next-step projects below, as each requires a substantial paper-level mathematical argument rather than a bounded formalization task.)  The recorded source-boundary caveats are that the middle source artifact
 leaves the residual region x > 1-epsilon_0 open, and the upper source artifact still
 depends on explicit directed interval tables replacing finite decimal certificate checks.
 (Detailed obligation tracking files are not shipped in this publish package; inspect
 `Erdos625/AnalyticalWrapper.lean` and run `#print axioms
-Problem625.Analytical.erdos_625_full_analytical` for the current obligation closure.)
+Problem625.Analytical.erdos_625_full_analytical` for the current obligation closure.) (The expected output is also recorded in `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.)
 
 ---
 
@@ -56,7 +68,7 @@ Problem625.Analytical.erdos_625_full_analytical` for the current obligation clos
    a.s. via a Borel–Cantelli / diagonal-subsequence argument, but the
    step is **not trivial** (direct BC-1 with $\varepsilon_n=1/\log n$
    fails, $\sum 2/\log n$ diverges; a subsequence-plus-monotonicity or
-   coupling argument is required) and is not yet in Lean. See §N1.
+   coupling argument is required) and is not yet in Lean. See the N1 section below.
    The in-probability corollary (the $\varepsilon\to 0$ limit of the
    per-$\varepsilon$ Lean theorem) is also not in the Lean chain
    itself, though it is a one-line measure-theoretic step.
@@ -66,7 +78,7 @@ Problem625.Analytical.erdos_625_full_analytical` for the current obligation clos
    Lemma 7.20 with our in-repository numerical certificate
    `lemma_7_10_ext` (1086-cell grid, $\sim 1.2$ orders of magnitude
    positivity margin). Heckel 2024 §Discussion explicitly conjectures
-   the underlying fact. (Numerical certificate scripts are not shipped in this publish package; see ADR-11 in `DEVELOPMENT.md` for background.)
+   the underlying fact. (Numerical certificate scripts are not shipped in this publish package; see ADR-12 in `DEVELOPMENT.md` for background.)
 4. **Extrapolation axiom #4** (`zeta_alphaMinusTwo_upper_bound_whp`):
    Heckel 2024 Prop 5(b) at $\alpha-1$, transferred to $\alpha-2$ via
    HP-2023's general-$a$ second-moment lemmas. Not a literal one-citation
@@ -105,13 +117,13 @@ which is also currently absent from the Lean chain.
 Replace the hybrid status of axiom A1 by a Lean-internal proof. The
 certificate is a $\varphi$-positivity statement on a finite grid plus
 a Lipschitz envelope; doable via `decide` on rationals after careful
-truncated-series arithmetic. Closes the P1-A disclosure.
+truncated-series arithmetic. Closes the hybrid-axiom (A1) disclosure gap.
 
 ### N3. Formalize the $(\alpha-2)$-version of Heckel 2024 Prop 5(b) (~2–3 months math + Lean)
 
 Write out the explicit $(\alpha-2)$-bounded second-moment chain by
 specializing HP-2023's general-$a$ second-moment lemmas (Lemmas 6.3–6.5
-in HP-2023). This closes the P1-B disclosure: axiom #4 becomes a
+in HP-2023). This closes the extrapolation-axiom (A4) disclosure gap: axiom #4 becomes a
 literal one-citation paper axiom plus a finite multinomial-coefficient
 specialization, no extrapolation needed.
 
@@ -124,12 +136,11 @@ project; an open mathematical question.
 
 ### N5. Reachability-based deletion of unused infrastructure (~1–2 weeks Lean)
 
-`PartBProfileBridge.lean` (29 K LOC) carries substantial supporting
+`PartBProfileBridge.lean` (~29.6 K lines (29597)) carries substantial supporting
 infrastructure, only part of which is reachable from
 `erdos_625_full_clean`. A careful reachability analysis could delete
 sub-trees that are only used by the legacy `erdos_625` chain (which is
-itself superseded by `erdos_625_97`/`erdos_625_full_clean`). Pure
-cleanup, no math change.
+itself superseded by `erdos_625_97`/`erdos_625_full_clean`). No changes to the underlying mathematical argument.
 
 ---
 
@@ -152,14 +163,14 @@ cleanup, no math change.
   publication package; the methodology and cross-model-auditing caveats
   are summarized in `README.md`, `DEVELOPMENT.md`, and `paper/main.tex`.
 - A CI workflow (`.github/workflows/build.yml`) running `lake build`
-  on each push is **committed**; see the workflow file at the
+  on each push is **committed** and is currently passing on the repository's default branch; see the workflow file at the
   repository root.
 
 ---
 
 ## Paper length note
 
-The companion paper `paper/main.tex` is ~8–10 pp — at the short end of
+The companion paper `paper/main.tex` is 8–10 pp (range reflects LaTeX compilation options and bibliography style variations) — at the short end of
 arXiv math.PR conventions for results of this scope. This is a
 deliberate choice: clarity and tight axiom-to-paper correspondence have
 been prioritized over expansion. Readers wanting the full step-by-step
@@ -183,7 +194,7 @@ strictly weaker **in-probability** form (in fact the per-$\varepsilon$
 quantitative form, of which "in probability" is the $\varepsilon \to 0$
 corollary; the corollary itself is also not in the Lean chain). The
 almost-sure upgrade requires a Borel–Cantelli-style argument that is
-**not trivial**. See §N1 above for the Borel–Cantelli obstruction detail.
+**not trivial**. See §N1 (Almost-sure upgrade) above for the Borel–Cantelli obstruction detail.
 
 This formalization and all five red-team audit passes were produced by
 an LLM-agent pipeline under human supervision; the audits are internal, not
@@ -194,5 +205,5 @@ at time of reading), orchestrated by the `operator` agent at
 whose codex-brain adapter ran `gpt-5.3-codex-spark` at `effort=low`
 (**note**: internal codename, may not correspond to a publicly documented model
 version). The 1M-context variant was load-bearing:
-`PartBProfileBridge.lean` is 29512 lines (~1.59 MB). See ADR-10 in
+`PartBProfileBridge.lean` is 29597 lines (~1.59 MB). See ADR-10 in
 `DEVELOPMENT.md` for full provenance details.

@@ -12,11 +12,14 @@ proof is structured as it is, not just *what* it proves.
 > details and shared-blind-spot caveats). The human supervisor selected
 > the proof strategy, accepted or rejected proposed steps, and ran
 > the Lean build; the agents generated and edited the source.
-> The Lean kernel verifies the proof modulo the seven axioms listed in `paper/SOURCES.md` for the fixed-epsilon companion theorem
-> `erdos_625_full_clean`.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
+> The Lean kernel verifies the proof modulo the seven axioms (four paper-backed plus three Lean kernel axioms: `propext`, `Classical.choice`, `Quot.sound`) listed in `paper/SOURCES.md` for the fixed-epsilon companion theorem `erdos_625_full_clean`. The analytical wrapper theorem family (the main entry point is `Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` in `AnalyticalWrapper.lean`) is not Lean-certified: it depends on three WHP bridge obligations not yet formalized in Lean.
 > See also ADR-7 below.
 
 ---
+
+*Notation used in these ADRs: see `proof/proof.md` §Global setup for definitions of α, α₀, x, μ(n,k), χ(G), ζ(G), and InMainRange.*
+
+> **Papers cited**: HP-2023 = Heckel, A. & Panagiotou, K. (2023). *Colouring random graphs: Tame colourings.* arXiv:2306.07253. Heckel 2024 = Heckel, A. (2024). *The difference between the chromatic and the cochromatic number of a random graph.* arXiv:2409.17614.
 
 ## ADR-1: Route selection — exact-no-empty profile chain vs. Theorem 1 route
 
@@ -40,7 +43,7 @@ proof is structured as it is, not just *what* it proves.
 
 **Date**: 2026-04-13 to 2026-04-15
 
-**Question**: How to prove P[ζ(G) ≤ k* − n^{1−ε/2} + 2n^{0.999}] ≥ 1 − ε?
+**Question**: How to prove P[ζ(G) ≤ k* − n^{1−ε/2} + 2n^{0.999}] ≥ 1 − ε? Here ζ(G) denotes the cochromatic number of G (the minimum number of cliques and independent sets needed to cover G's vertices).
 
 **Options considered**:
 - Direct second-moment method (Paley–Zygmund) applied directly to ζ — would need the full second-moment distribution of ζ, which is not available from the paper
@@ -48,7 +51,7 @@ proof is structured as it is, not just *what* it proves.
 
 **Decision**: Two-stage approach (implemented in `ZetaConcentration.lean` and `BoundedDifferences.lean`)
 
-**Rationale**: The Azuma–Hoeffding concentration infrastructure (BoundedDifferences.lean) is fully proved with 0 sorry — this is the part that produces the high-probability bound from a mere existence statement. The Paley–Zygmund step requires Proposition 5(b) of Heckel 2024, which provides the second-moment bound on Z; this is the single admitted axiom in Part C. The separation cleanly isolates what is verified (concentration) from what is admitted (the second-moment bound).
+**Rationale**: The Azuma–Hoeffding concentration infrastructure (BoundedDifferences.lean) is fully proved with 0 sorry — this is the part that produces the high-probability bound from a mere existence statement. The Paley–Zygmund step requires Proposition 5(b) of Heckel 2024, which provides the second-moment bound on Z; this is the single admitted axiom in Part C (current Lean name: `heckel_offdiag_term_bound`, a 2026-05-11 narrowing of the original `heckel_cochromatic_second_moment`, which is now a proved theorem). The separation cleanly isolates what is verified (concentration) from what is admitted (the second-moment bound).
 
 ---
 
@@ -80,7 +83,7 @@ proof is structured as it is, not just *what* it proves.
 
 **Decision**: Descriptive content-encoding names, with each axiom declaration citing the paper, arXiv ID, theorem/equation number, and a plain-language description
 
-**Rationale**: When a reader runs `#print axioms Problem625.Publishable.erdos_625`, the output is the primary record of what is admitted. Self-documenting names make this output interpretable without cross-referencing. A reader who sees `heckel_cochromatic_second_moment` immediately knows which mathematical claim is admitted; `axiom_hp_1` would require consulting a separate document.
+**Rationale**: When a reader runs `#print axioms Problem625.Publishable.erdos_625`, the output is the primary record of what is admitted. Self-documenting names make this output interpretable without cross-referencing. A reader who sees `heckel_offdiag_term_bound` (the current load-bearing admitted axiom for the Part C cochromatic bound, which is a 2026-05-11 narrowing of the prior `heckel_cochromatic_second_moment` — now a proved theorem built on top of `heckel_offdiag_term_bound`) immediately knows which mathematical claim is admitted; `axiom_hp_1` would require consulting a separate document.
 
 ---
 
@@ -94,9 +97,11 @@ proof is structured as it is, not just *what* it proves.
 - Include full session notes — several hundred notes documenting each proof engineering decision, failed attempt, and diagnostic pass
 - Include only ADRs — five records covering the durable architectural decisions, with a curated milestone git history
 
-**Decision**: 5 ADRs (this document) + milestone git history. Session notes are not included.
+**Decision**: 12 ADRs as of initial publish (2026-05-16; ADR-1–5 pre-publishability, ADR-6–9 post-audit additions, ADR-10–12 publish-readiness repair rounds) + milestone git history. Session notes are not included.
 
 **Rationale**: Session notes are indispensable during active development but are too context-dependent and voluminous to be navigable for an external reader. ADRs extract the durable decisions that affect how the proof is structured and why. The git history provides a coarse-grained development arc. Readers wanting finer-grained detail should consult the proof and source files directly.
+
+**Amendment (2026-05-16)**: The document now contains 13 ADRs. ADR-13 was added to record the 2026-05-16 file consolidation.
 
 ---
 
@@ -117,7 +122,7 @@ proof is structured as it is, not just *what* it proves.
 
 **Options considered**:
 - Replace the false lemma with an axiom citing HP-2023 — rejected: HP-2023 does not state this bound as a universal eventual fact; doing so would misrepresent HP-2023's scope by stating as universally true a bound that HP-2023 does not claim.
-- Keep the file as documentation — rejected: the file was not imported anywhere and is not reachable from the build graph; an orphaned file with a false anchor theorem provides no documentation value and creates an integrity risk.
+- Keep the file as documentation — rejected: the file was not imported anywhere and is not reachable from the build graph; an orphaned file with a mathematically false anchor theorem provides no documentation value and creates an integrity risk.
 - Delete the file — chosen.
 
 **Decision**: Delete `InMainRangeUpper.lean`. The correct utility lemmas (`choose_le_ne_div_k_pow` and `expectedIndSets_le_stirling_bound`) may be revived in a future file if a legitimate use is found.
@@ -160,7 +165,7 @@ Heckel 2024 Prop 5(b). The structural margin
 $\mu_{\alpha-2}/\mu_\alpha = \Theta(n^2/\log^2 n)$ has been numerically
 verified for $n \in [100, 10^6]$ and asymptotically via mpmath for
 $n \in [10^7, 10^{12}]$ (numerical certificate scripts are not shipped in this
-publish package; see ADR-12 for methodology).
+publish package; see ADR-12 for non-shipment rationale; the certificate scripts verify positivity of the φ-function on a 1086-cell Lipschitz grid at machine precision using mpmath interval arithmetic).
 
 ---
 
@@ -198,8 +203,7 @@ not bloat the load-bearing chain.
 
 **Question**: The original Lean name for $\mathbf{k}_{\alpha-1}(n)$ was
 `partBThresholdWitness`, a holdover from a prior architecture where it
-was identified as the "Part B threshold witness". After the
-a prior internal audit explicitly flagged the mismatch between
+was identified as the "Part B threshold witness". After a prior internal audit explicitly flagged the mismatch between
 the name (suggests Part B / α-2) and the actual semantics (α-1), should
 we rename?
 
@@ -278,7 +282,7 @@ pipeline. Being explicit about the methodology is both honest and
 informative.
 
 **Limitation framing (shared-blind-spot risk).** LLM-generated
-proofs may exhibit plausibility-driven failure modes that can survive
+proofs may exhibit plausibility-driven failure modes (errors that sound mathematically reasonable but are incorrect, surviving critique because critic and author share the same training-data priors) that can survive
 same-model internal critique because the proof author and the critic
 share training-data blind spots. Here the proof author and the five
 internal red-team critics are the same model family (AI-assisted
@@ -305,7 +309,7 @@ the flagship `erdos_625_full_clean` axiom set — the human supervisor
 
 **Background**: The four paper-backed axioms are the entire boundary
 between "published math + Lean-verified" and "this repository's
-contribution". For a reader scoring the contribution, who proposed
+contribution". For a reader assessing the relative contributions of human and LLM work, who proposed
 each axiom is decision-relevant. The round-1 disclosure
 ("the human supervisor selected the proof strategy at the
 branch-point level") was procedurally honest but ambiguous about
@@ -320,7 +324,7 @@ the granularity of axiom proposal.
   proposed the modified axiom together with the in-repository
   numerical certificate `lemma_7_10_ext`. The Python certificate
   script was agent-authored (not shipped in this publish package;
-  see ADR-12 for methodology). The human supervisor approved the citation
+  see ADR-12 for non-shipment rationale; the certificate scripts verify positivity of the φ-function on a 1086-cell Lipschitz grid at machine precision using mpmath interval arithmetic). The human supervisor approved the citation
   boundary at the Heckel-2024-§Discussion level.
 
 - **A2 `partB_alphaMinusTwo_firstMomentBelowOne_source`** (literal).
@@ -397,7 +401,7 @@ accepted diff; difficult lemmas (e.g.,
   (`CrossingPartB.lean`, `CrossingWindowProof.lean`,
   `GapArithmetic.lean`);
 - **at the build-passes level** for the large legacy module
-  `PartBProfileBridge.lean` (29512 lines): the human supervisor
+  `PartBProfileBridge.lean` (29597 lines): the human supervisor
   did not read every tactic; review was at the granularity of
   "does `lake build` still pass and does `#print axioms` still
   return the expected set". This is honestly weaker review and is
@@ -414,7 +418,7 @@ used in this development; the codex-brain (`gpt-5.3-codex-spark`,
 served only as the *operator orchestrator's action-selection brain*, not
 as an independent worker-quality critic. The five internal audit sessions
 were all run by the same model family as the proof author
-(`claude-opus-4-7[1m]`; see ADR-10 note on public verifiability). Cross-model auditing was a straightforward partial mitigation that was not employed, and remains the principal residual methodological gap of the
+(`claude-opus-4-7[1m]` (see ADR-10 for public-verifiability caveat on this identifier)). Cross-model auditing was a straightforward partial mitigation that was not employed, and remains the principal residual methodological gap of the
 round-2 disclosure.
 
 **Decision**: Record reject ratio, HIL granularity, and the
@@ -424,6 +428,32 @@ iterations, deliberate suppression of cross-model evidence).
 
 **Rationale**: All three items were P1 findings of round-2 red-team.
 None was previously stated in the package.
+
+---
+
+## ADR-13: File consolidation — merge development scaffolding into publish-package modules (2026-05-16)
+
+**Date**: 2026-05-16 (added during round-3 publish-readiness repair)
+
+**Question**: The publish package at time of first commit contained approximately 26 Lean files, many of which were tightly coupled certificate/skeleton pairs (where a 'certificate' file encodes numerical interval-arithmetic outputs and a 'skeleton' file is the Lean consumer that imports those outputs) that were artifacts of an incremental development process rather than independently meaningful modules. Should these be consolidated before publication?
+
+**Options considered**:
+- Keep all files as-is: preserves development history verbatim but exposes internal scaffolding as a top-level API surface.
+- Merge tightly coupled file pairs: reduces the file count to the meaningful architectural units, removes development-only split boundaries.
+
+**Decision**: Merge into 17 published Lean files. Specifically:
+- `PartBAlphaMinusTwoFirstMomentAxiom.lean` + `PartBAlphaMinusTwoFirstMomentBridge.lean` + `CumulantAlphaMinusTwo.lean` → merged into `CrossingPartB.lean`
+- `PartBAlphaMinusTwoLogGap.lean` → merged into `CrossingWindowProof.lean`
+- `LowBranchCertificate.lean` + `LowBranchIntervalSkeleton.lean` → merged into `LowBranch.lean`
+- `MiddleBranchCertificate.lean` + `MiddleBranchIntervalSkeleton.lean` → merged into `MiddleBranch.lean`
+- `UpperR2Certificate.lean` + `UpperR2IntervalSkeleton.lean` + `UpperR2IntervalOutput.lean` → merged into `UpperR2.lean`
+- `SharpProfileBound.lean` deleted (unused; proof would not port cleanly to the Lean 4 toolchain version used in this package (`leanprover/lean4:v4.29.0-rc8`) and was not on any publishable theorem's proof path).
+
+**Rationale**: The split files were development scaffolding: separate certificate-interface and skeleton-consumer files that were created incrementally during proof engineering but carry no independent mathematical meaning. Merging them presents readers with the actual architectural units. No mathematical content was changed; all axiom declarations, proved theorems, and proof paths are preserved. The published package ships 17 files; the development history has a higher file count but is not shipped (see ADR-5).
+
+**Non-shipment policy** (cross-cutting clarification, supplements ADR-5): Development artifacts (session notes, operator harness dumps, scratch files) are not included in this publish package. The parent Erdosreshala repository (`problems/625/work/notes/`) preserves the development history. This policy was implicit in ADR-5 and is made explicit here.
+
+**`PublishableProof.lean` and `RouteD2.lean` status**: Both files originated during earlier development stages but remain on the proof path of `erdos_625_full_clean` and are not development-only artifacts. `RouteD2.lean` assembles the intermediate `erdos_625` and `erdos_625_97` chains; `PublishableProof.lean` contains all four published theorems.
 
 ---
 

@@ -93,6 +93,8 @@ That is a fixed-epsilon quantitative in-probability theorem.  It is not a
 formalization of the full analytical proof route and should not be cited as
 machine certification of `proof/proof.md`.
 
+This work does not claim the Erdős $100 prize for Problem 625, which requires an almost-sure result.
+
 The module `Erdos625.AnalyticalWrapper` also compiles.  It provides the
 Lean-facing theorem
 `Problem625.Analytical.erdos_625_full_analytical` and records the current
