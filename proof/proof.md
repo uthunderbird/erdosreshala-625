@@ -161,7 +161,7 @@ The low/crossing-branch proof (matching the Lean certificate, 2026-05-15):
    applied at a = alpha-2; no mu condition; valid for all x in [0,1)):
    chi(G) >= k_{alpha-2} - n^{0.99}   whp.
    Source: Lean axiom A3 = chi_alphaMinusTwo_lower_bound_whp
-   (CrossingPartB.lean:263; HP-2023 Lemma 8.1 at a = alpha-2 +
+   (CrossingPartB.lean:149; HP-2023 Lemma 8.1 at a = alpha-2 +
    standard Azuma-Hoeffding concentration, slack n^{0.99}).
 
 2. alpha-2-bounded cochromatic upper bound at k_{alpha-1}:
@@ -170,7 +170,7 @@ The low/crossing-branch proof (matching the Lean certificate, 2026-05-15):
    see SOURCES.md A4 for transfer details):
    zeta(G) <= k_{alpha-1} + n^{0.99}   whp.
    Source: Lean axiom A4 = zeta_alphaMinusTwo_upper_bound_whp
-   (CrossingPartB.lean:311; extrapolation status disclosed in SOURCES.md §A4).
+   (CrossingPartB.lean:166; extrapolation status disclosed in SOURCES.md §A4).
 
 3. Threshold gap (deterministic):
    In ¬InMainRangeMod, the (alpha-2) and (alpha-1) first-moment thresholds
