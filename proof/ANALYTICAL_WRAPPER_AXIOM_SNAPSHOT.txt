@@ -2,6 +2,10 @@
 --   #print axioms Problem625.Analytical.erdos_625_full_analytical
 -- Date: 2026-05-15
 -- Source: publish/erdos-625/Erdos625/AnalyticalWrapper.lean
+--
+-- NOTE (2026-05-16): The theorem was renamed to
+--   Problem625.Analytical.erdos_625_full_analytical_of_source_obligations
+-- after this snapshot was recorded. The axiom closure is unchanged.
 
 'Problem625.Analytical.erdos_625_full_analytical' depends on axioms: [propext,
  Classical.choice,

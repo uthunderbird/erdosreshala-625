@@ -46,8 +46,8 @@ disclosure stack is in `README.md` §Lean boundary and §Lemma and axiom source 
 ## Analytical wrapper status (not Lean-certified)
 
 The repository now also includes `Erdos625.AnalyticalWrapper`, which exposes
-`Problem625.Analytical.erdos_625_full_analytical` as a Lean-facing
-dependency-closure interface for the full analytical route.  Not Lean-certified (i.e., the Lean kernel has not verified this without admitted axioms): the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
+`Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` as a Lean-facing
+dependency-closure interface for the full analytical route.  Not Lean-certified (i.e., the Lean kernel has not verified this without admitted axioms): the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP bridge obligations not yet formalized in Lean.
 
 **2026-05-15 update**: The low-branch (Regime I, `x ∈ [0, 0.029155]`) source argument was revised from the C5-based source note (`low-branch-quantitative-splice-theorem-2026-05-13.md`) to the first-moment (Markov) method using HP-2023 Le. 7.4, Le. 7.3, Le. 8.1, HP-2023 lines 2364–2369, and Heckel 2024 line 516. The prior C5-based source is superseded and no longer used in the proof.
 
@@ -56,7 +56,7 @@ leaves the residual region x > 1-epsilon_0 open, and the upper source artifact s
 depends on explicit directed interval tables replacing finite decimal certificate checks.
 (Detailed obligation tracking files are not shipped in this publish package; inspect
 `Erdos625/AnalyticalWrapper.lean` and run `#print axioms
-Problem625.Analytical.erdos_625_full_analytical` for the current obligation closure.) (The expected output is also recorded in `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.)
+Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` for the current obligation closure.) (The expected output is also recorded in `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.)
 
 ---
 

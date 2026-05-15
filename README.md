@@ -27,12 +27,12 @@ argument — see `proof/proof.md` §Dependency-status table.
 **Lean status**: checked companion theorem plus a compiled analytical
 dependency wrapper.  The Lean files prove a separate fixed-epsilon
 in-probability theorem `Problem625.Publishable.erdos_625_full_clean` and now
-also expose `Problem625.Analytical.erdos_625_full_analytical`, a Lean-facing
+also expose `Problem625.Analytical.erdos_625_full_analytical_of_source_obligations`, a Lean-facing
 wrapper for the full analytical route.  The wrapper records the dependency
 closure and formalizes the final assembly/probability infrastructure, but it
 still depends on three bridge-input-shaped source-package WHP bridge obligations.
 
-**Certification status**: Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
+**Certification status**: Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP bridge obligations not yet formalized in Lean.
 
 **Self-containment**: This package is self-contained.  All source theorem notes
 for all three proof regimes are included in `proof/source-notes/`.  The middle
@@ -97,14 +97,14 @@ This work does not claim the Erdős $100 prize for Problem 625, which requires a
 
 The module `Erdos625.AnalyticalWrapper` also compiles.  It provides the
 Lean-facing theorem
-`Problem625.Analytical.erdos_625_full_analytical` and records the current
-dependency closure for the full analytical route.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical` depends on three WHP bridge obligations not yet formalized in Lean.
+`Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` and records the current
+dependency closure for the full analytical route.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP bridge obligations not yet formalized in Lean.
 
 To inspect the wrapper axiom inventory:
 
 ```lean
 import Erdos625.AnalyticalWrapper
-#print axioms Problem625.Analytical.erdos_625_full_analytical
+#print axioms Problem625.Analytical.erdos_625_full_analytical_of_source_obligations
 ```
 
 The expected output is recorded in
