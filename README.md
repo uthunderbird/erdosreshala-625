@@ -52,13 +52,9 @@ reader convenience.  This repository: `https://github.com/uthunderbird/erdosresh
 | `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt` | Recorded `#print axioms` output for the analytical wrapper theorem. |
 | `Erdos625/PublishableProof.lean` | Lean companion theorem for the separate fixed-epsilon in-probability result. |
 | `Erdos625/AnalyticalWrapper.lean` | Lean-facing wrapper theorem and dependency closure for the full analytical route. |
-| `Erdos625/LowBranchCertificate.lean` | Lean-facing numerical certificate interface for the low-branch finite-room margins. |
-| `Erdos625/LowBranchIntervalSkeleton.lean` | First Lean consumer of the low-branch certificate contract. |
-| `Erdos625/MiddleBranchCertificate.lean` | Lean-facing numerical certificate interface for the middle-branch modified Lemma 7.20 package. |
-| `Erdos625/MiddleBranchIntervalSkeleton.lean` | First Lean consumer of the middle-branch certificate contract. |
-| `Erdos625/UpperR2Certificate.lean` | Lean-facing numerical certificate interface for the upper-boundary `r=2` appendix. |
-| `Erdos625/UpperR2IntervalSkeleton.lean` | First Lean consumer of the upper-boundary certificate contract. |
-| `Erdos625/UpperR2IntervalOutput.lean` | Named upper interval-output component module, currently packaging appendix endpoint quantities under the `IntervalOutputs` contract. |
+| `Erdos625/LowBranch.lean` | Lean-facing numerical certificate and interval skeleton for the low-branch finite-room margins. |
+| `Erdos625/MiddleBranch.lean` | Lean-facing numerical certificate and interval skeleton for the middle-branch modified Lemma 7.20 package. |
+| `Erdos625/UpperR2.lean` | Lean-facing numerical certificate, interval skeleton, and named appendix endpoint quantities for the upper-boundary `r=2` branch. |
 
 ## Analytical theorem
 
@@ -126,20 +122,16 @@ caveats remain open: the middle source artifact leaves the residual region
 explicit directed interval tables replacing finite decimal certificate checks.
 
 The analytical wrapper (`Erdos625/AnalyticalWrapper.lean`) directly imports
-the low, middle, and upper certificate consumer skeletons.  Each skeleton
-proves certificate-to-slack consequences for its branch and exposes handoff
-shapes for the remaining WHP bridge obligations.  The upper branch additionally
-imports `Erdos625/UpperR2IntervalOutput.lean`, which packages the appendix
-endpoint constants as named quantities and routes them through the upper
-assembly contracts.  The three remaining WHP obligations are recorded in
-`AnalyticalRemainingConcreteObligations` within the wrapper.
+the low, middle, and upper branch modules.  Each module combines the numerical
+certificate interface with the interval-skeleton consumer, proving
+certificate-to-slack consequences for its branch and exposing handoff shapes
+for the remaining WHP bridge obligations.  The three remaining WHP obligations
+are recorded in `AnalyticalRemainingConcreteObligations` within the wrapper.
 
 For detailed Lean internals (adapter names, constructor chains, component
 contracts), see the source files directly: `Erdos625/AnalyticalWrapper.lean`,
-`Erdos625/LowBranchIntervalSkeleton.lean`,
-`Erdos625/MiddleBranchIntervalSkeleton.lean`,
-`Erdos625/UpperR2IntervalSkeleton.lean`,
-`Erdos625/UpperR2IntervalOutput.lean`.
+`Erdos625/LowBranch.lean`, `Erdos625/MiddleBranch.lean`,
+`Erdos625/UpperR2.lean`.
 
 To inspect the Lean axiom inventory:
 
