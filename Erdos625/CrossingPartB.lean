@@ -96,6 +96,27 @@ def KThresholdGapSource : Prop :=
     (n : ℝ) / Real.log n ^ 2 ≤
       (kThresholdAlphaMinus2 n : ℝ) - (kThresholdAlphaMinusOne n : ℝ)
 
+/-- Direct deterministic bridge from the exact threshold frontier to the
+`n / log² n` threshold gap used downstream. -/
+theorem KThresholdGapSource_of_eventual_thresholdGap
+    (hgap :
+      ∃ n₀ : ℕ, ∀ n : ℕ, n ≥ n₀ →
+        kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ ≤
+          firstMomentThreshold n (kThresholdAlphaMinus2Level n)
+            (kThresholdAlphaMinus2Level_pos n)) :
+    KThresholdGapSource := by
+  obtain ⟨n₀, hgap'⟩ := hgap
+  refine ⟨n₀, fun n hn => ?_⟩
+  have hNat : kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ ≤
+      kThresholdAlphaMinus2 n := by
+    simpa [kThresholdAlphaMinus2] using hgap' n hn
+  have hReal : (kThresholdAlphaMinusOne n : ℝ) +
+      ((⌈(n : ℝ) / Real.log n ^ 2⌉₊ : ℕ) : ℝ) ≤
+        (kThresholdAlphaMinus2 n : ℝ) := by exact_mod_cast hNat
+  have hceil : (n : ℝ) / Real.log n ^ 2 ≤
+      ((⌈(n : ℝ) / Real.log n ^ 2⌉₊ : ℕ) : ℝ) := Nat.le_ceil _
+  linarith
+
 /-- The crossing lower bound, proved from `partB_alphaMinusTwo_cumulant_gap_source`. -/
 theorem partB_crossing_lower_bound_alpha_minus_two_source : KThresholdGapSource :=
   partB_alphaMinusTwo_cumulant_gap_source
@@ -135,6 +156,57 @@ theorem partB_alphaMinusTwo_firstMomentBelowOne_of_thresholdGap
       (kThresholdAlphaMinus2Level_pos n) := lt_of_lt_of_le hk hgap
   exact expectedTBoundedColorings_lt_one_of_lt_firstMomentThreshold
     n (kThresholdAlphaMinus2Level n) k (kThresholdAlphaMinus2Level_pos n) hk'
+
+/-- **Eventual threshold-gap frontier → first-moment source.**
+
+This is the converse reduction to
+`kThresholdAlphaMinusOne_add_ceil_n_div_logsq_le_kThresholdAlphaMinus2` at the
+source level: to discharge the first-moment paper axiom, it suffices to prove
+eventually that the left edge of the `(α − 2)` crossing window lies below the
+`(α − 2)` first-moment threshold. -/
+theorem partB_alphaMinusTwo_firstMomentBelowOne_of_eventual_thresholdGap
+    (hgap :
+      ∃ n₀ : ℕ, ∀ n : ℕ, n ≥ n₀ →
+        kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ ≤
+          firstMomentThreshold n (kThresholdAlphaMinus2Level n)
+            (kThresholdAlphaMinus2Level_pos n)) :
+    ∃ n₀ : ℕ, ∀ n : ℕ, n ≥ n₀ →
+      ∀ k : ℕ, k < kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ →
+        expectedTBoundedColorings n k (kThresholdAlphaMinus2Level n) < 1 := by
+  obtain ⟨n₀, hgap'⟩ := hgap
+  refine ⟨n₀, fun n hn k hk => ?_⟩
+  exact partB_alphaMinusTwo_firstMomentBelowOne_of_thresholdGap n (hgap' n hn) hk
+
+/-- **Exact source frontier.**
+
+The first-moment source window is equivalent to the eventual threshold-gap
+statement.  Thus the remaining mathematical content of
+`partB_alphaMinusTwo_firstMomentBelowOne_source` is precisely an asymptotic
+lower bound on the `(α − 2)` first-moment threshold, not a separate
+probabilistic step. -/
+theorem partB_alphaMinusTwo_firstMomentBelowOne_iff_eventual_thresholdGap :
+    (∃ n₀ : ℕ, ∀ n : ℕ, n ≥ n₀ →
+      ∀ k : ℕ, k < kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ →
+        expectedTBoundedColorings n k (kThresholdAlphaMinus2Level n) < 1) ↔
+    (∃ n₀ : ℕ, ∀ n : ℕ, n ≥ n₀ →
+      kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊ ≤
+        firstMomentThreshold n (kThresholdAlphaMinus2Level n)
+          (kThresholdAlphaMinus2Level_pos n)) := by
+  constructor
+  · intro hsrc
+    obtain ⟨n₀, hsrc'⟩ := hsrc
+    refine ⟨n₀, fun n hn => ?_⟩
+    set K : ℕ := kThresholdAlphaMinusOne n + ⌈(n : ℝ) / Real.log n ^ 2⌉₊
+      with hK_def
+    have hlt : ∀ k : ℕ, k < K →
+        expectedTBoundedColorings n k (kThresholdAlphaMinus2Level n) < 1 := hsrc' n hn
+    have hnot : ∀ k : ℕ, k < K →
+        ¬ ((1 : ℝ) ≤ expectedTBoundedColorings n k (kThresholdAlphaMinus2Level n)) := by
+      intro k hk hge
+      exact (lt_irrefl (1 : ℝ)) (lt_of_le_of_lt hge (hlt k hk))
+    exact Nat.le_find_iff _ _ |>.mpr (by intro m hm; exact hnot m hm)
+  · intro hgap
+    exact partB_alphaMinusTwo_firstMomentBelowOne_of_eventual_thresholdGap hgap
 
 /-- Paper-backed χ lower-bound whp at level α−2 for crossing windows.
 

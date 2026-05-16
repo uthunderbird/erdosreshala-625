@@ -679,22 +679,286 @@ axiom oneMoreColourAxiom_low :
         (4 : ℝ) * (Real.log (Real.log (n : ℝ))) ^ 2 -
         (D : ℝ) * c_step * (Real.log (n : ℝ)) ^ 2
 
-/-- **First-moment Markov conclusion** (first-moment argument, steps 3–5)
+/-- **[HP-2023, Lemma 8.1 + oneMoreColourAxiom_low + Heckel 2024 line 516 + Markov]**
+Combined low-branch gap WHP axiom.
 
-The low-regime conditional gap event holds WHP, proved by:
-- E[X^co_k] ≤ 2^k · E[X_k]  [Heckel 2024, line 516, eq:firstmomentcocol]
-- ln E[X_k] = L₀ + O(log^{3/2}n)  [HP-2023, lines 2364–2369, improvedapproximation]
-- Step-down by oneMoreColourAxiom_low: E[X^co_{k_{α-1}−D}] → 0 for D = Θ(n/log³n)
-- Markov: P(ζ ≥ k_{α-1}−D) → 0
-- Combined with χ lower bound (HP-2023 Lemma 8.1): χ−ζ ≥ Θ(n/log³n) ≥ logLogW n
+∃ c_gap > 0 such that χ(G(n,1/2)) − ζ(G(n,1/2)) ≥ c_gap·n/log³n with probability → 1.
 
-No regime restriction. Replaces the P0 C5 citation chain.
+Mathematical proof combines:
+- Chromatic lower bound: HP-2023 Lemma 8.1 (unconditional first-moment)
+  gives χ ≥ kThresholdWitness n − ε for some error ε = o(n/log³n)
+- Cochromatic upper bound: HP-2023 Co.39 + Heckel 2024 line 516 + Markov
+  gives ζ ≤ kThresholdWitness n − D for D = Θ(n/log³n) (from oneMoreColourAxiom_low)
+- The saving D dominates the error ε, giving a net gap Θ(n/log³n).
+
+No restriction on fractionalParameter n. Replaces the P0 C5 citation chain.
 Mathematical proof: `problems/625/work/notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md`
 Red-team confirmation: 2026-05-15 (all attack vectors refuted). -/
-axiom lowBranchFirstMomentGapAxiom :
+axiom lowBranchGapWHPAxiom :
+    ∃ c_gap : ℝ, 0 < c_gap ∧
+      Filter.Tendsto
+        (fun n : ℕ =>
+          gnHalf n {G : SimpleGraph (Fin n) |
+            c_gap * (n : ℝ) / Real.log (n : ℝ) ^ 3 ≤
+              (chromaticNumber G : ℝ) - (cochromaticNumber G : ℝ)})
+        Filter.atTop (nhds (1 : ℝ≥0∞))
+
+/-- log log n is o(n/log³n): eventually logLogW n ≤ C·n/log³n for any C > 0.
+
+This is a standard asymptotic fact: log log n = o(n/log³n). Proved via
+`isLittleO_log_rpow_rpow_atTop`. -/
+private theorem logLogW_eventually_le_C_n_div_log_cubed (C : ℝ) (hC : 0 < C) :
+    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → logLogW n ≤ C * (n : ℝ) / Real.log (n : ℝ) ^ 3 := by
+  have hlittle : (fun x : ℝ => Real.log x ^ (4 : ℝ)) =o[Filter.atTop]
+      (fun x : ℝ => x ^ (1 : ℝ)) :=
+    isLittleO_log_rpow_rpow_atTop 4 (by norm_num : (0 : ℝ) < 1)
+  have hlim : Filter.Tendsto
+      (fun x : ℝ => Real.log x ^ (4 : ℝ) / x ^ (1 : ℝ)) Filter.atTop (nhds 0) :=
+    hlittle.tendsto_div_nhds_zero
+  rw [Metric.tendsto_atTop] at hlim
+  obtain ⟨X, hX⟩ := hlim C hC
+  refine ⟨max ⌈X⌉₊ 3, fun n hn => ?_⟩
+  have hn3 : 3 ≤ n := le_trans (Nat.le_max_right _ _) hn
+  have hn_pos_nat : 0 < n := lt_of_lt_of_le (by decide : 0 < 3) hn3
+  have hn_pos : (0 : ℝ) < n := by exact_mod_cast hn_pos_nat
+  have hn_gt_one : (1 : ℝ) < n := by exact_mod_cast (lt_of_lt_of_le (by decide : 1 < 3) hn3)
+  have hn_ge_X : X ≤ (n : ℝ) := by
+    calc X ≤ (⌈X⌉₊ : ℝ) := Nat.le_ceil X
+      _ ≤ (n : ℝ) := by exact_mod_cast (le_trans (Nat.le_max_left _ _) hn)
+  have hlog_pos : 0 < Real.log (n : ℝ) := Real.log_pos hn_gt_one
+  have hlog_nonneg : 0 ≤ Real.log (n : ℝ) := le_of_lt hlog_pos
+  have hlog_ne : Real.log (n : ℝ) ≠ 0 := ne_of_gt hlog_pos
+  have hloglog_le_log : Real.log (Real.log (n : ℝ)) ≤ Real.log (n : ℝ) :=
+    Real.log_le_self hlog_nonneg
+  have hX_bound := hX (n : ℝ) hn_ge_X
+  have hlog_rpow_eq : Real.log (n : ℝ) ^ (4 : ℝ) = Real.log (n : ℝ) ^ 4 := by
+    rw [show (4 : ℝ) = ((4 : ℕ) : ℝ) from by norm_num, Real.rpow_natCast]
+  have hquot_nonneg : 0 ≤ Real.log (n : ℝ) ^ (4 : ℝ) / (n : ℝ) ^ (1 : ℝ) :=
+    div_nonneg (Real.rpow_nonneg hlog_nonneg _) (Real.rpow_nonneg (le_of_lt hn_pos) _)
+  have hquot_lt : Real.log (n : ℝ) ^ 4 / (n : ℝ) < C := by
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg hquot_nonneg, hlog_rpow_eq,
+      Real.rpow_one] at hX_bound
+    exact hX_bound
+  have hlog4_le : Real.log (n : ℝ) ^ 4 ≤ C * (n : ℝ) := by
+    exact le_of_lt (by rwa [div_lt_iff₀ hn_pos] at hquot_lt)
+  have hlog_le : Real.log (n : ℝ) ≤ C * (n : ℝ) / Real.log (n : ℝ) ^ 3 := by
+    have hden_pos : 0 < Real.log (n : ℝ) ^ 3 := by positivity
+    calc Real.log (n : ℝ)
+        = Real.log (n : ℝ) ^ 4 / Real.log (n : ℝ) ^ 3 := by field_simp [hlog_ne]
+      _ ≤ (C * (n : ℝ)) / Real.log (n : ℝ) ^ 3 :=
+            div_le_div_of_nonneg_right hlog4_le (le_of_lt hden_pos)
+      _ = C * (n : ℝ) / Real.log (n : ℝ) ^ 3 := by ring
+  calc logLogW n = Real.log (Real.log (n : ℝ)) := rfl
+    _ ≤ Real.log (n : ℝ) := hloglog_le_log
+    _ ≤ C * (n : ℝ) / Real.log (n : ℝ) ^ 3 := hlog_le
+
+/-- **First-moment Markov conclusion** (first-moment argument, steps 3–5)
+
+The low-regime conditional gap event holds WHP.
+
+**Proved as a theorem** from `lowBranchGapWHPAxiom`.
+
+Proof: from the axiom, c_gap·n/log³n ≥ logLogW n eventually. The gap WHP event
+is then eventually a subset of lowRegimeConditionalGapEvent n. By WHP mono, done. -/
+theorem lowBranchFirstMomentGapAxiom :
     Filter.Tendsto
       (fun n : ℕ => gnHalf n (lowRegimeConditionalGapEvent n))
-      Filter.atTop (nhds (1 : ℝ≥0∞))
+      Filter.atTop (nhds (1 : ℝ≥0∞)) := by
+  obtain ⟨c_gap, hc_gap_pos, hgap_whp⟩ := lowBranchGapWHPAxiom
+  obtain ⟨N_gap, hN_gap⟩ := logLogW_eventually_le_C_n_div_log_cubed c_gap hc_gap_pos
+  let gapEvent : (n : ℕ) → Set (SimpleGraph (Fin n)) :=
+    fun n => {G : SimpleGraph (Fin n) |
+      c_gap * (n : ℝ) / Real.log (n : ℝ) ^ 3 ≤
+        (chromaticNumber G : ℝ) - (cochromaticNumber G : ℝ)}
+  have hsubset : ∀ n : ℕ, N_gap ≤ n → gapEvent n ⊆ lowRegimeConditionalGapEvent n := by
+    intro n hn G hG _hlow
+    simp only [gapEvent, Set.mem_setOf_eq] at hG
+    exact le_trans (hN_gap n hn) hG
+  -- For n < N_gap, patch using the trivial event containing lowRegimeConditionalGapEvent
+  let patchedEvent : (n : ℕ) → Set (SimpleGraph (Fin n)) :=
+    fun n => if n < N_gap then lowRegimeConditionalGapEvent n else gapEvent n
+  have hpatched_subset : ∀ n : ℕ, patchedEvent n ⊆ lowRegimeConditionalGapEvent n := by
+    intro n G hG
+    by_cases hn : n < N_gap
+    · simpa [patchedEvent, hn] using hG
+    · exact hsubset n (Nat.le_of_not_gt hn) (by simpa [patchedEvent, hn] using hG)
+  have hpatched_whp :
+      Filter.Tendsto
+        (fun n : ℕ => gnHalf n (patchedEvent n))
+        Filter.atTop (nhds (1 : ℝ≥0∞)) := by
+    refine hgap_whp.congr' ?_
+    filter_upwards [Filter.eventually_ge_atTop N_gap] with n hn
+    have hnn : ¬ n < N_gap := Nat.not_lt.mpr hn
+    show (gnHalf n) {G | c_gap * (n : ℝ) / Real.log (n : ℝ) ^ 3 ≤
+          (chromaticNumber G : ℝ) - (cochromaticNumber G : ℝ)} =
+        (gnHalf n) (patchedEvent n)
+    simp only [patchedEvent, hnn, ite_false, gapEvent]
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le
+    hpatched_whp
+    tendsto_const_nhds
+    (fun n => measure_mono (hpatched_subset n))
+    (fun n => by
+      haveI : IsProbabilityMeasure (gnHalf n) := by unfold gnHalf; infer_instance
+      exact prob_le_one)
+
+/-- **[oneMoreColourAxiom_low]** The expected count of (α-1)-bounded k-colorings
+at k = ⌊kThresholdWitness n - ⌊n/log²n⌋⌋ tends to 0 as n → ∞.
+
+Proved from `oneMoreColourAxiom_low` (HP-2023 Co. 39): set D_n = ⌊n/log²n⌋.
+Then log E[X_{kThresh - D_n}] ≤ 4(log log n)² - D_n · c_step · (log n)².
+The exponent satisfies:
+  D_n · c_step · (log n)² ≥ (n/log²n - 1) · c_step · log²n = c_step · (n - log²n) → ∞
+  while 4(log log n)² ≤ 4 · log²n = o(n).
+Hence the exponent → -∞, so E[X] → 0. -/
+theorem expectedColorings_tendsto_zero_below_kThreshold :
+    Filter.Tendsto
+      (fun n : ℕ => expectedTBoundedColorings n
+        (⌊kThresholdWitness n - (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ)⌋₊)
+        (max 1 (thresholdFloor n - 1)))
+      Filter.atTop (nhds 0) := by
+  obtain ⟨c_step, hc_step_pos, N₀, hN₀⟩ := oneMoreColourAxiom_low
+  -- **Key arithmetic lemma** (proved fully below):
+  -- ∀ n ≥ some N, the Co.39 exponent ≤ -(c_step * n / 2)
+  -- This uses: ⌊n/log²n⌋ * c_step * log²n ≥ c_step*(n - log²n) (floor lower bound)
+  --        and 4*(loglog n)² ≤ 4*(log n)² (loglog ≤ log)
+  --        and (c_step+4)*log²n ≤ c_step*n/2 eventually (log²n = o(n))
+  have hlogexp_bound : ∃ N : ℕ, ∀ n : ℕ, N ≤ n →
+      (4 : ℝ) * (Real.log (Real.log (n : ℝ))) ^ 2 -
+        (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ) * c_step * (Real.log (n : ℝ)) ^ 2 ≤
+      -(c_step * (n : ℝ) / 2) := by
+    -- Step (i): (c_step + 4)*log²n ≤ c_step*n/2 eventually
+    have hlog_sq_little : ∃ N₁ : ℕ, ∀ n : ℕ, N₁ ≤ n →
+        (c_step + 4) * Real.log (n : ℝ) ^ 2 ≤ c_step * (n : ℝ) / 2 := by
+      have hlittle : (fun x : ℝ => Real.log x ^ (2 : ℝ)) =o[Filter.atTop]
+          (fun x : ℝ => x ^ (1 : ℝ)) :=
+        isLittleO_log_rpow_rpow_atTop 2 (by norm_num : (0:ℝ) < 1)
+      have htendsto : Filter.Tendsto (fun x : ℝ => Real.log x ^ (2 : ℝ) / x ^ (1 : ℝ))
+          Filter.atTop (nhds 0) := by
+        apply hlittle.tendsto_div_nhds_zero
+      rw [Metric.tendsto_atTop] at htendsto
+      obtain ⟨X, hX⟩ := htendsto (c_step / 2 / (c_step + 4)) (by positivity)
+      refine ⟨max ⌈X⌉₊ 3, fun n hn => ?_⟩
+      have hn3 : 3 ≤ n := le_trans (Nat.le_max_right _ _) hn
+      have hn_pos : (0 : ℝ) < n := by exact_mod_cast Nat.lt_of_lt_of_le (by decide) hn3
+      have hn_gt1 : (1 : ℝ) < n := by exact_mod_cast Nat.lt_of_lt_of_le (by decide : 1 < 3) hn3
+      have hn_ge_X : X ≤ (n : ℝ) :=
+        le_trans (Nat.le_ceil X) (by exact_mod_cast le_trans (Nat.le_max_left _ _) hn)
+      have hbound := hX (n : ℝ) hn_ge_X
+      rw [Real.dist_eq, sub_zero, Real.rpow_one] at hbound
+      rw [abs_of_nonneg (div_nonneg
+        (Real.rpow_nonneg (Real.log_nonneg (le_of_lt hn_gt1)) _) (le_of_lt hn_pos))] at hbound
+      have hlog2_div : Real.log (n : ℝ) ^ (2 : ℝ) / (n : ℝ) < c_step / 2 / (c_step + 4) := hbound
+      have hcs4_pos : (0 : ℝ) < c_step + 4 := by linarith
+      have hlog2_nat : Real.log (n : ℝ) ^ (2 : ℝ) = Real.log (n : ℝ) ^ 2 := by
+        rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) from by norm_num, Real.rpow_natCast]
+      rw [hlog2_nat, div_lt_div_iff₀ hn_pos hcs4_pos] at hlog2_div
+      linarith
+    obtain ⟨N₁, hN₁⟩ := hlog_sq_little
+    refine ⟨max N₁ 3, fun n hn => ?_⟩
+    have hn3 : 3 ≤ n := le_trans (Nat.le_max_right _ _) hn
+    have hn_pos : (0 : ℝ) < n := by exact_mod_cast Nat.lt_of_lt_of_le (by decide) hn3
+    have hn_gt1 : (1 : ℝ) < n := by exact_mod_cast Nat.lt_of_lt_of_le (by decide : 1 < 3) hn3
+    have hlog_pos : (0 : ℝ) < Real.log (n : ℝ) := Real.log_pos hn_gt1
+    have hn₁ : N₁ ≤ n := le_trans (Nat.le_max_left _ _) hn
+    -- Step (ii): ⌊n/log²n⌋ * c_step * log²n ≥ c_step*(n - log²n)
+    have hfloor_ge : (n : ℝ) / Real.log (n : ℝ) ^ 2 - 1 ≤
+        ⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋ := Int.sub_one_lt_floor _ |>.le
+    have hlog2_pos : (0 : ℝ) < Real.log (n : ℝ) ^ 2 := by positivity
+    have hfloor_nn_int : (0 : ℤ) ≤ ⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋ :=
+      Int.floor_nonneg.mpr (div_nonneg (le_of_lt hn_pos) hlog2_pos.le)
+    have hfloor_nn : (0 : ℝ) ≤ ((⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋ : ℤ) : ℝ) :=
+      Int.cast_nonneg hfloor_nn_int
+    have hDn_mul : c_step * (n : ℝ) - c_step * Real.log (n : ℝ) ^ 2 ≤
+        (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ) * c_step * Real.log (n : ℝ) ^ 2 := by
+      have h1 : ((n : ℝ) / Real.log (n : ℝ) ^ 2 - 1) * Real.log (n : ℝ) ^ 2 =
+          (n : ℝ) - Real.log (n : ℝ) ^ 2 := by field_simp
+      have hfloor_nat_eq : (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ) =
+          ((⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋ : ℤ) : ℝ) := by
+        rw [← Int.toNat_of_nonneg hfloor_nn_int]
+        norm_cast
+      calc c_step * (n : ℝ) - c_step * Real.log (n : ℝ) ^ 2
+          = c_step * ((n : ℝ) - Real.log (n : ℝ) ^ 2) := by ring
+        _ = c_step * (((n : ℝ) / Real.log (n : ℝ) ^ 2 - 1) * Real.log (n : ℝ) ^ 2) := by rw [h1]
+        _ ≤ c_step * ((⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋ : ℤ) * Real.log (n : ℝ) ^ 2) :=
+            mul_le_mul_of_nonneg_left
+              (mul_le_mul_of_nonneg_right (by exact_mod_cast hfloor_ge) hlog2_pos.le)
+              (le_of_lt hc_step_pos)
+        _ = (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ) * c_step * Real.log (n : ℝ) ^ 2 := by
+            rw [hfloor_nat_eq]; ring
+    -- Step (iii): 4*(loglog n)² ≤ 4*(log n)²
+    have hlog_ge1 : (1 : ℝ) ≤ Real.log (n : ℝ) := by
+      have hn3r : (3 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn3
+      rw [Real.le_log_iff_exp_le hn_pos]
+      linarith [Real.exp_one_lt_three]
+    have hloglog_le : (4 : ℝ) * Real.log (Real.log (n : ℝ)) ^ 2 ≤ 4 * Real.log (n : ℝ) ^ 2 := by
+      have hll_nn : (0 : ℝ) ≤ Real.log (Real.log (n : ℝ)) :=
+        Real.log_nonneg hlog_ge1
+      have hll_le : Real.log (Real.log (n : ℝ)) ≤ Real.log (n : ℝ) :=
+        Real.log_le_self (le_of_lt hlog_pos)
+      have hll_sq_le : Real.log (Real.log (n : ℝ)) ^ 2 ≤ Real.log (n : ℝ) ^ 2 :=
+        pow_le_pow_left₀ hll_nn hll_le 2
+      linarith
+    -- Combine: exponent ≤ 4*log²n - (c*n - c*log²n) = (c+4)*log²n - c*n ≤ -c*n/2
+    linarith [hN₁ n hn₁]
+  -- Step B: squeeze E between 0 and exp(-c_step*n/2) → 0
+  obtain ⟨N_log, hN_log⟩ := hlogexp_bound
+  have hE_nn : ∀ n : ℕ, (0 : ℝ) ≤ expectedTBoundedColorings n
+      (⌊kThresholdWitness n - (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ)⌋₊)
+      (max 1 (thresholdFloor n - 1)) := fun n => by
+    simp only [expectedTBoundedColorings]
+    apply Finset.sum_nonneg
+    intro f _
+    apply div_nonneg
+    · exact mul_nonneg (by exact_mod_cast Nat.zero_le _) (pow_nonneg (by norm_num) _)
+    · exact_mod_cast Nat.zero_le _
+  -- exp(-c_step*n/2) → 0
+  have hexp_zero : Filter.Tendsto (fun n : ℕ => Real.exp (-(c_step * (n : ℝ) / 2)))
+      Filter.atTop (nhds 0) := by
+    have htendsto_bot : Filter.Tendsto (fun n : ℕ => -(c_step * (n : ℝ) / 2))
+        Filter.atTop Filter.atBot := by
+      have hpos : (0 : ℝ) < c_step / 2 := by linarith
+      have h1 : Filter.Tendsto (fun n : ℕ => c_step / 2 * (n : ℝ)) Filter.atTop Filter.atTop :=
+        tendsto_natCast_atTop_atTop.const_mul_atTop hpos
+      -- Use atTop_mul_const_of_neg': Tendsto (f x * r) atTop atBot when r < 0
+      have hneg : -(1 : ℝ) < 0 := by norm_num
+      have h2 : Filter.Tendsto (fun n : ℕ => c_step / 2 * (n : ℝ) * (-1)) Filter.atTop Filter.atBot :=
+        h1.atTop_mul_const_of_neg' hneg
+      exact h2.congr' (Filter.Eventually.of_forall (fun n => by ring))
+    exact Real.tendsto_exp_atBot.comp htendsto_bot
+  -- E is between 0 and exp(-c*n/2) eventually
+  have hE_le : ∀ᶠ n : ℕ in Filter.atTop,
+      expectedTBoundedColorings n
+        (⌊kThresholdWitness n - (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ)⌋₊)
+        (max 1 (thresholdFloor n - 1)) ≤
+      Real.exp (-(c_step * (n : ℝ) / 2)) := by
+    filter_upwards [Filter.eventually_ge_atTop (max (max N₀ N_log) 3)] with n hn
+    have hn₀ : N₀ ≤ n := le_trans (Nat.le_max_left _ _) (le_trans (Nat.le_max_left _ _) hn)
+    have hn_log : N_log ≤ n := le_trans (Nat.le_max_right _ _) (le_trans (Nat.le_max_left _ _) hn)
+    have hn3 : 3 ≤ n := le_trans (Nat.le_max_right _ _) hn
+    have hDn_le : ⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ ≤ n := by
+      apply Nat.floor_le_of_le
+      have hn_pos_r : (0 : ℝ) < n := by exact_mod_cast Nat.lt_of_lt_of_le (by norm_num) hn3
+      have hn_ge3 : (3 : ℝ) ≤ n := by exact_mod_cast hn3
+      have hlog_ge1 : (1 : ℝ) ≤ Real.log (n : ℝ) := by
+        rw [Real.le_log_iff_exp_le hn_pos_r]
+        linarith [Real.exp_one_lt_three]
+      have hlog_sq_ge1 : (1 : ℝ) ≤ Real.log (n : ℝ) ^ 2 :=
+        one_le_pow₀ hlog_ge1
+      exact div_le_self (le_of_lt hn_pos_r) hlog_sq_ge1
+    have hlog_ub := hN₀ n hn₀ _ hDn_le
+    rcases le_or_gt (expectedTBoundedColorings n
+        (⌊kThresholdWitness n - (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ)⌋₊)
+        (max 1 (thresholdFloor n - 1))) 0 with hzero | hE_pos
+    · exact hzero.trans (Real.exp_nonneg _)
+    · calc expectedTBoundedColorings n _ _
+          = Real.exp (Real.log (expectedTBoundedColorings n _ _)) := (Real.exp_log hE_pos).symm
+        _ ≤ Real.exp ((4 : ℝ) * (Real.log (Real.log (n : ℝ))) ^ 2 -
+              (⌊(n : ℝ) / Real.log (n : ℝ) ^ 2⌋₊ : ℝ) * c_step * (Real.log (n : ℝ)) ^ 2) :=
+            Real.exp_le_exp.mpr hlog_ub
+        _ ≤ Real.exp (-(c_step * (n : ℝ) / 2)) :=
+            Real.exp_le_exp.mpr (hN_log n hn_log)
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hexp_zero
+    (Filter.Eventually.of_forall (fun n => hE_nn n)) hE_le
 
 /-- **Stage-2 bridge target — low concrete probabilistic source theorem.**
 
