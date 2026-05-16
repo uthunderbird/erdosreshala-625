@@ -15,11 +15,9 @@ the logical skeleton in one place, with all steps named and citations given.
 
 ## Axiom Inventory
 
-This proof rests on exactly **3 paper-backed axioms** (and the standard Lean axioms
-propext, Classical.choice, Quot.sound).
-For the full audit trail — including which axioms are reachable from each theorem and
-which are excluded — see the "Lean Formalization" section in
-`problems/625/solution/proof.md`.
+The main theorems in this file have different axiom footprints:
+
+**`erdos_625` (97% coverage, requires `InMainRange`)** rests on exactly **3 paper-backed axioms**:
 
 | Axiom | Location | Source |
 |-------|----------|--------|
@@ -27,7 +25,15 @@ which are excluded — see the "Lean Formalization" section in
 | `paperPartBExactNoEmptyDenomBinaryLowerControlledLhsDecayTarget_source` | PartBProfileBridge.lean | Heckel–Panagiotou 2023 (arXiv:2306.07253) eq:wert2 |
 | `heckel_offdiag_term_bound` | ZetaConcentration.lean | Heckel 2024 (arXiv:2409.17614) Proposition 5(b), off-diagonal term (2026-05-11 narrowing of the original `heckel_cochromatic_second_moment`, which is now a proved theorem in `ZetaConcentration.lean:1568` on top of `heckel_offdiag_term_bound`) |
 
-Everything else in this file is proved from these three axioms (and Mathlib).
+**`erdos_625_full` and `erdos_625_full_clean` (all n)** additionally depend on two crossing-case axioms for the `¬InMainRangeMod` regime:
+
+| Axiom | Location | Source |
+|-------|----------|--------|
+| `chi_alphaMinusTwo_lower_bound_whp` | CrossingPartB.lean | HP-2023 Lemma 8.1 at α−2 |
+| `zeta_alphaMinusTwo_upper_bound_whp` | CrossingPartB.lean | Heckel 2024 Prop 5(b) adapted to (α−2)-bounded profiles |
+
+Plus the standard Lean axioms propext, Classical.choice, Quot.sound.
+For the full audit trail, see the "Lean Formalization" section in `problems/625/solution/proof.md`.
 
 **Dependency boundary note**: `profileLogCoreBridgeTarget_source` (PartBProfileBridge.lean),
 the Theorem-1 chain axiom citing HP-2023 Theorem 1, is NOT in the closure of `erdos_625`.

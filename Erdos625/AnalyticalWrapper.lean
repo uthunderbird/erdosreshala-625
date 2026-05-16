@@ -685,11 +685,13 @@ Combined low-branch gap WHP axiom.
 ∃ c_gap > 0 such that χ(G(n,1/2)) − ζ(G(n,1/2)) ≥ c_gap·n/log³n with probability → 1.
 
 Mathematical proof combines:
-- Chromatic lower bound: HP-2023 Lemma 8.1 (unconditional first-moment)
-  gives χ ≥ kThresholdWitness n − ε for some error ε = o(n/log³n)
-- Cochromatic upper bound: HP-2023 Co.39 + Heckel 2024 line 516 + Markov
-  gives ζ ≤ kThresholdWitness n − D for D = Θ(n/log³n) (from oneMoreColourAxiom_low)
-- The saving D dominates the error ε, giving a net gap Θ(n/log³n).
+- Chromatic lower bound: HP-2023 Lemma 8.1 (unconditional first-moment crossing)
+  gives χ ≥ k_{α-2} in Regime I (E[X_{k_{α-2}}] < 1 ⇒ χ > k_{α-2} a.s.)
+- Cochromatic upper bound: HP-2023 Co.39 + Heckel 2024 line 516 + Markov give
+  E[X_{k_{α-1} - D}] → 0 for D = Θ(n/log²n), so ζ < k_{α-1} - D + 1 whp;
+  in Regime I, k_{α-1} - D < k_{α-2}, so ζ < k_{α-2} whp.
+- The gap χ - ζ ≥ k_{α-2} - (k_{α-1} - D) = D - (k_{α-1} - k_{α-2}) = Θ(n/log³n)
+  (since k_{α-1} - k_{α-2} = Θ(n(log log n)/log²n) = o(D) in Regime I).
 
 No restriction on fractionalParameter n. Replaces the P0 C5 citation chain.
 Mathematical proof: `problems/625/work/notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md`
