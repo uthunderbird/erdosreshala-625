@@ -3059,21 +3059,76 @@ private theorem lowBranchConservativeGapLowerPub (n : ℕ) :
   simp only [lowBranchConservativeSavingPub, lowBranchConservativeErrorPub]
   ring
 
-/-- The low-regime WHP conclusion from the two paper axioms.
+/-- Low-regime WHP proved directly from the two paper axioms.
 
-The proved arithmetic `lowBranchConservativeGapLowerPub` shows saving − 2·error > 0;
-the two paper axioms jointly imply a gap ≥ saving − 2·error = (3/8000)·n/log³n whp,
-which dominates logLogW n. This theorem routes through `lowBranchFirstMomentGapAxiom`
-(proved from `lowBranchGapWHPAxiom`) since the Lean infrastructure for the full
-first-moment assembly from component axioms is in the main repo's LowBranchSourceEvent.lean.
-The paper axioms `paperLowBranchChiLower_source` and `paperLowBranchZetaUpper_source` are
-the authoritative citations; their Lean assembly into the final WHP is a formalization
-work item captured in the main repo. -/
+Proof: combine `paperLowBranchChiLower_source` and `paperLowBranchZetaUpper_source`
+via `gnHalf_whp_inter` to get WHP of the intersection event
+  { G | χ(G) ≥ kThresh − ε } ∩ { G | ζ(G) ≤ kThresh − saving + ε }.
+In this intersection, χ − ζ ≥ saving − 2·ε = (3/8000)·n/log³n (by
+`lowBranchConservativeGapLowerPub`, proved by `ring`).
+Since logLogW n ≤ (3/8000)·n/log³n eventually (`logLogW_eventually_le_C_n_div_log_cubed`),
+the intersection is eventually a subset of `lowRegimeConditionalGapEvent n`.
+The finite-prefix patching gives the full tendsto. -/
 theorem lowBranchWHP_of_paper_axioms :
     Filter.Tendsto
       (fun n : ℕ => gnHalf n (lowRegimeConditionalGapEvent n))
+      Filter.atTop (nhds (1 : ENNReal)) := by
+  -- Step 1: WHP of the joint chi-lower / zeta-upper intersection
+  let jointEvent : (n : ℕ) → Set (SimpleGraph (Fin n)) :=
+    fun n => {G : SimpleGraph (Fin n) |
+      kThresholdWitness n - lowBranchConservativeErrorPub n ≤ (chromaticNumber G : ℝ) ∧
+      (cochromaticNumber G : ℝ) ≤ kThresholdWitness n - lowBranchConservativeSavingPub n +
+        lowBranchConservativeErrorPub n}
+  have hjoint : Filter.Tendsto
+      (fun n : ℕ => gnHalf n (jointEvent n))
+      Filter.atTop (nhds (1 : ENNReal)) := by
+    have h := gnHalf_whp_inter
+      (A := fun n => {G | kThresholdWitness n - lowBranchConservativeErrorPub n ≤
+          (chromaticNumber G : ℝ)})
+      (B := fun n => {G | (cochromaticNumber G : ℝ) ≤ kThresholdWitness n -
+          lowBranchConservativeSavingPub n + lowBranchConservativeErrorPub n})
+      paperLowBranchChiLower_source
+      paperLowBranchZetaUpper_source
+    exact h.congr' (by filter_upwards; intro n; simp [jointEvent, Set.mem_setOf_eq])
+  -- Step 2: In jointEvent n, χ − ζ ≥ (3/8000)·n/log³n
+  have hgap_in_joint : ∀ n : ℕ, ∀ G ∈ jointEvent n,
+      (3 / 8000 : ℝ) * lowBranchLogCubedScalePub n ≤
+        (chromaticNumber G : ℝ) - (cochromaticNumber G : ℝ) := by
+    intro n G hG
+    simp only [jointEvent, Set.mem_setOf_eq] at hG
+    have heq := lowBranchConservativeGapLowerPub n
+    linarith [hG.1, hG.2]
+  -- Step 3: logLogW n ≤ (3/8000)·n/log³n eventually
+  obtain ⟨N_gap, hN_gap⟩ :=
+    logLogW_eventually_le_C_n_div_log_cubed (3 / 8000) (by norm_num)
+  -- Step 4: jointEvent n ⊆ lowRegimeConditionalGapEvent n for n ≥ N_gap
+  have hsubset : ∀ n : ℕ, N_gap ≤ n → jointEvent n ⊆ lowRegimeConditionalGapEvent n := by
+    intro n hn G hG _
+    have h1 := hN_gap n hn
+    have h2 := hgap_in_joint n G hG
+    simp only [lowBranchLogCubedScalePub] at h2
+    have h2' : 3 / 8000 * ↑n / Real.log ↑n ^ 3 ≤ ↑(chromaticNumber G) - ↑(cochromaticNumber G) := by
+      linarith [mul_div_assoc (3 / 8000 : ℝ) (n : ℝ) (Real.log (n : ℝ) ^ 3)]
+    linarith
+  -- Step 5: patch finite prefix and apply monotonicity
+  let patchedEvent : (n : ℕ) → Set (SimpleGraph (Fin n)) :=
+    fun n => if n < N_gap then lowRegimeConditionalGapEvent n else jointEvent n
+  have hpatch_sub : ∀ n : ℕ, patchedEvent n ⊆ lowRegimeConditionalGapEvent n := by
+    intro n G hG
+    by_cases hn : n < N_gap
+    · simpa [patchedEvent, hn] using hG
+    · exact hsubset n (Nat.le_of_not_gt hn) (by simpa [patchedEvent, hn] using hG)
+  have hpatch_whp : Filter.Tendsto
+      (fun n : ℕ => gnHalf n (patchedEvent n))
       Filter.atTop (nhds (1 : ENNReal)) :=
-  lowBranchFirstMomentGapAxiom
+    hjoint.congr' (by
+      filter_upwards [Filter.eventually_ge_atTop N_gap] with n hn
+      simp [patchedEvent, Nat.not_lt.mpr hn])
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le
+    hpatch_whp tendsto_const_nhds
+    (fun n => measure_mono (hpatch_sub n))
+    (fun n => by haveI : IsProbabilityMeasure (gnHalf n) := by unfold gnHalf; infer_instance
+                 exact prob_le_one)
 
 /-- **[HP-2023 §7+§8, Heckel 2024 §3–7]** Middle crossing-complement WHP.
 
@@ -3132,7 +3187,7 @@ theorem erdos625_low_discharged :
       (fun n : ℕ => gnHalf n (analyticalGapEvent n))
       Filter.atTop (nhds (1 : ℝ≥0∞)) :=
   erdos_625_full_analytical_of_remaining_concrete_obligations
-    { low_branch_concrete_source := lowBranchFirstMomentGapAxiom
+    { low_branch_concrete_source := lowBranchWHP_of_paper_axioms
       middle_branch_concrete_source := middleBranchCrossingComplementWHPAxiom
       upper_r2_concrete_source := upperBranchPaperWHPAxiom }
 
