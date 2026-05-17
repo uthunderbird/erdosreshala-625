@@ -763,7 +763,7 @@ closing the upper-boundary good branch, but the route is not yet proved and all
 
 ```text
 target document:
-- /Users/thunderbird/Projects/erdosreshala/problems/625/work/notes/upper-boundary-alpha-anchor-r1-certificate-theorem-2026-05-13.md
+- proof/source-notes/upper-boundary-alpha-anchor-r1-certificate-theorem-2026-05-13.md
 
 items fixed in order:
 1. added a prominent Roadmap status section near the top stating explicitly that

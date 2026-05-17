@@ -10,7 +10,7 @@ This file is a self-contained, human-readable presentation of the proof.
 It imports the full formalization from the production files and presents
 the logical skeleton in one place, with all steps named and citations given.
 
-**Full proof documentation**: `problems/625/solution/proof.md`
+**Full proof documentation**: `proof/proof.md`
 (see the "Lean Formalization" section for the authoritative axiom audit trail).
 
 ## Axiom Inventory
@@ -33,7 +33,7 @@ The main theorems in this file have different axiom footprints:
 | `zeta_alphaMinusTwo_upper_bound_whp` | CrossingPartB.lean | Heckel 2024 Prop 5(b) adapted to (α−2)-bounded profiles |
 
 Plus the standard Lean axioms propext, Classical.choice, Quot.sound.
-For the full audit trail, see the "Lean Formalization" section in `problems/625/solution/proof.md`.
+For the full audit trail, see the "Lean Formalization" section in `proof/proof.md`.
 
 **Dependency boundary note**: `profileLogCoreBridgeTarget_source` (PartBProfileBridge.lean),
 the Theorem-1 chain axiom citing HP-2023 Theorem 1, is NOT in the closure of `erdos_625`.
@@ -97,7 +97,7 @@ noncomputable def χLower (ε : ℝ) (n : ℕ) : ℝ :=
 
 /-- The upper bound on ζ(G) from Part C: k*(n) minus n^{1−ε/2} plus 2·n^{0.999}.
     Note: `999 / 1000` is a real literal here (not integer division), corresponding to
-    the exponent `0.999` in the proof writeup (`problems/625/solution/proof.md`). -/
+    the exponent `0.999` in the proof writeup (`proof/proof.md`). -/
 noncomputable def ζUpper (ε : ℝ) (n : ℕ) : ℝ :=
   kThresholdWitness n - (n : ℝ) ^ (1 - ε / 2) + 2 * (n : ℝ) ^ (999 / 1000 : ℝ)
 
@@ -311,8 +311,7 @@ theorem erdos_625 (ε : ℝ) (hε_pos : 0 < ε) (hε_small : ε < 0.001) :
 (or `-- #print axioms Problem625.Publishable.erdos_625` in a scratch file importing this module).
 Axiom count verified by build: `lake env lean Erdos625/PublishableProof.lean`
 returns exit code 0 with no errors, 2026-05-10. See also "Lean Formalization" in
-`proof/proof.md` (in the publish package; the source repo path was
-`problems/625/solution/proof.md`):
+`proof/proof.md` (in the publish package):
 
 ```
 -- Standard Lean kernel axioms (always present):
@@ -363,7 +362,7 @@ axioms (propext, Classical.choice, Quot.sound) = 4 total.
 
 **Source**: HP-2023 arXiv:2306.07253 Lemma 7.20 (condition (d) only modified),
 Heckel 2024 arXiv:2409.17614 Proposition 5(b), and proof sketch
-`problems/625/work/notes/lemma-7.20-mod-sketch-2026-05-10.md`.
+(development notes, not shipped in this package; see DEVELOPMENT.md ADR-12).
 -/
 
 /-- **Axiom (1 new paper axiom)**: Under the extended main range `InMainRangeMod`,
@@ -380,8 +379,8 @@ Heckel 2024 arXiv:2409.17614 Proposition 5(b), and proof sketch
   Cites:
   - HP-2023 arXiv:2306.07253 §7 Lemma 7.20, eqs. (7.16), (7.19), (7.20), Appendix B
   - Heckel 2024 arXiv:2409.17614 Proposition 5(b)
-  - Proof sketch: problems/625/work/notes/lemma-7.20-mod-sketch-2026-05-10.md
-  - Numerical certificate: problems/625/work/notes/lemma_7_10_ext.md
+  - Proof sketch: development notes (not shipped in this package; see DEVELOPMENT.md ADR-12)
+  - Numerical certificate: `proof/source-notes/lemma_7_10_ext.md`
 
   **Disclosure (red-team P1-A, 2026-05-11):** This axiom is HYBRID, not pure
   literal paper-citation. The HP-2023 §7 / Lemma 7.20 bulk is peer-reviewed.

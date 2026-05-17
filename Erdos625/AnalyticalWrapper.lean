@@ -694,7 +694,7 @@ Mathematical proof combines:
   (since k_{α-1} - k_{α-2} = Θ(n(log log n)/log²n) = o(D) in Regime I).
 
 No restriction on fractionalParameter n. Replaces the P0 C5 citation chain.
-Mathematical proof: `problems/625/work/notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md`
+Mathematical proof: `proof/source-notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md`
 Red-team confirmation: 2026-05-15 (all attack vectors refuted). -/
 axiom lowBranchGapWHPAxiom :
     ∃ c_gap : ℝ, 0 < c_gap ∧
@@ -3035,7 +3035,7 @@ for x < x₀). Instead:
    E[X^co_k] = 2^k · E[X_k] (exact formula, no regime restriction).
 4. Markov: P(ζ ≥ k_{α−1}−D) ≤ E[X^co_{k_{α−1}−D}] → 0 for D = Θ(n/log³n).
 
-Full proof: problems/625/work/notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md
+Full proof: `proof/source-notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md`
 (5-expert swarm, 7 iterations, red-team confirmed 2026-05-15).
 
 Sources: HP-2023 arXiv:2306.07253 (Co. 39, Le. 7.4);
@@ -3157,7 +3157,7 @@ This is derived in the main formalization from three component axioms:
   logLogW n ≤ saving − transferError − zetaError eventually
 
 The full derivation uses the UpperR2SharpFirstMomentProfilewiseG3SourcePayload route
-(Erdosreshala/Problem625/UpperBranchSourceAxiom.lean).
+(development source; see `proof/source-notes/upper-boundary-r2-integrated-theorem-2026-05-13.md`).
 
 Sources: Heckel–Panagiotou, arXiv:2306.07253 (Theorem 1, §4 Lemma 4.1, §7, Appendix);
 Heckel–Riordan 2023, arXiv:2103.14014 (Lemma 44). -/
@@ -3178,10 +3178,9 @@ All three bridge-shaped WHP axioms are replaced by paper-level axioms:
 No bridge-shaped axioms remain. All axiomatic content is at the paper-citation level.
 
 For the full axiom inventory and mathematical justification, see:
-- `problems/625/solution/proof.md`
-- `Erdosreshala/Problem625/UpperBranchSourceAxiom.lean` (main repo)
-- `Erdosreshala/Problem625/MiddleCrossingComplementAxiom.lean` (main repo)
-- `Erdosreshala/Problem625/LowBranchSourceEvent.lean` (main repo) -/
+- `proof/proof.md` (canonical proof writeup, in this package)
+- `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt` (recorded axiom snapshot)
+- `paper/SOURCES.md` (per-axiom paper-correspondence audit) -/
 theorem erdos625_low_discharged :
     Filter.Tendsto
       (fun n : ℕ => gnHalf n (analyticalGapEvent n))

@@ -2,7 +2,7 @@
   "accepted_row_count": 2,
   "coverage_ok": true,
   "covered_right": "1",
-  "csv_path": "../../problems/625/work/certificates/a1_good_branch_certificate_x029155_to_1.csv",
+  "csv_path": "not-shipped (development artifact; see DEVELOPMENT.md ADR-12)",
   "gaps": [],
   "gate_closed": true,
   "phi_lower": "6.564303795169942231514054623108995203328894965534666764593067259038054377353167609526E-7",
