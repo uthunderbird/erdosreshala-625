@@ -117,7 +117,7 @@ citation boundary. See `../DEVELOPMENT.md` ADR-11.
 ### A3. `chi_alphaMinusTwo_lower_bound_whp` (literal)
 
 **Lean name**: `Problem625.chi_alphaMinusTwo_lower_bound_whp`
-**File**: `Erdos625/CrossingPartB.lean:149` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
+**File**: `Erdos625/CrossingPartB.lean:251` (line numbers as of 2026-05-17; may drift — locate by `grep -n '^axiom chi_alphaMinusTwo_lower_bound_whp'`)
 **GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Source**: Heckel & Panagiotou (2023), arXiv:2306.07253, Lemma 8.1
@@ -138,7 +138,7 @@ LLM-authored. See `../DEVELOPMENT.md` ADR-11.
 ### A4. `zeta_alphaMinusTwo_upper_bound_whp` (extrapolation)
 
 **Lean name**: `Problem625.zeta_alphaMinusTwo_upper_bound_whp`
-**File**: `Erdos625/CrossingPartB.lean:166` (line numbers as of 2026-05-16; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
+**File**: `Erdos625/CrossingPartB.lean:293` (line numbers as of 2026-05-17; may drift — locate by `grep -n '^axiom zeta_alphaMinusTwo_upper_bound_whp'`)
 **GitHub**: [Lean axiom statement available at the repository — see File path above]
 
 **Source**: Heckel (2024), arXiv:2409.17614, Proposition 5(b) +
