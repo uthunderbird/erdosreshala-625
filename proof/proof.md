@@ -31,17 +31,21 @@ All source theorem notes for the middle and upper branches are included in
 `proof/source-notes/` in this package.
 
 Note on the AnalyticalWrapper: the file Erdos625/AnalyticalWrapper.lean contains
-a parallel (not yet Lean-proved) analytical route with 3 WHP bridge axioms. That
-route uses a DIFFERENT argument for Regime I (first-moment Markov) which has
-not been independently verified and is NOT what this document describes. This
-document describes the PROVED route (erdos_625_full_clean, A1–A4).
+a parallel analytical route using a DIFFERENT argument for Regime I
+(first-moment/Markov cochromatic upper bound, not A2+A3+A4), which is NOT what
+this document describes. This document describes the PROVED route
+(erdos_625_full_clean, A1–A4). The AnalyticalWrapper exposes two theorems:
 
-Lean certification remains blocked by the bridge-input-shaped WHP obligations
-recorded in the analytical wrapper axiom snapshot (`proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`).
-In particular, the Lean/source boundary still records that the middle source
-artifact leaves the residual region x > 1-epsilon_0 open and that the upper
-source artifact depends on explicit directed interval tables (now supplied in
-`proof/source-notes/upper-boundary-r2-explicit-interval-tables-2026-05-13.md`).
+- `erdos_625_full_analytical_of_source_obligations`: NOT Lean-certified (three
+  bridge-shaped WHP obligations remain in its dependency chain). Axiom snapshot:
+  `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.
+- `erdos625_low_discharged` (added 2026-05-17): Lean-certified modulo four
+  paper-cited axioms (all three bridge obligations replaced). The Lean/source
+  boundary notes that the middle source artifact covers only x <= 1-epsilon_0
+  for fixed epsilon_0 > 0 (residual region x > 1-epsilon_0 handled by the upper
+  branch), and that the upper source artifact uses explicit directed interval
+  tables supplied in
+  `proof/source-notes/upper-boundary-r2-explicit-interval-tables-2026-05-13.md`.
 
 Date: 2026-05-15 (updated 2026-05-16, updated 2026-05-17)
 

@@ -73,7 +73,7 @@ The chromatic number concentrates near k_α (the α-th first-moment threshold), 
 
 **Three-regime split.** The parameter x sweeps [0,1) as n varies. The proof splits on x because the mechanism producing the gap differs in each range:
 
-- **Regime I (x ≤ 0.029155, ~3% of n):** The "crossing" case, where the expected number of (α-2)-colorings is below 1. The (α-2)-bounded first-moment threshold k_{α-2} lies well above k_{α-1}, giving a deterministic gap k_{α-2} − k_{α-1} ≥ n^{1−ε}. A chromatic lower bound at k_{α-2} (HP-2023) and a cochromatic upper bound at k_{α-1} (Heckel 2024) then assemble to χ − ζ ≥ n^{1−2ε}.
+- **Regime I (x ≤ 0.029155, ~3% of n):** The "crossing" case, where the expected number of (α-2)-colorings is below 1. The (α-2)-bounded first-moment threshold k_{α-2} lies well above k_{α-1}, giving a deterministic gap k_{α-2} − k_{α-1} ≥ n^{1−ε}. A chromatic lower bound at k_{α-2} (HP-2023) and a cochromatic upper bound at k_{α-1} (Heckel 2024) assemble to χ − ζ ≥ n^{1−ε} − 2n^{0.99}, which is ≥ n^{1−2ε} for large n (see `rpow_clean_bound_eventually` in `PublishableProof.lean`), giving the clean bound χ − ζ ≥ n^{1−2ε}.
 
 - **Regime II (0.029155 ≤ x ≤ 0.95, ~92% of n):** The "good branch," where a positivity condition φ(1,x,1) > 0 holds (HP-2023 Lemma 7.20, extended by an in-repository numerical certificate for x near 0.029155). This supports a profile-counting concentration argument giving χ − ζ → ∞.
 
@@ -110,7 +110,7 @@ The proof covers all `x in [0,1)` by three regimes:
 
 | Regime | Range | Shipped source theorem | Bound |
 |---|---|---|---|
-| Low | `[0,0.029155]` | First-moment (Markov) method, 2026-05-15 (HP-2023 Le.7.4, Le.7.3=HRHowdoes Co.39; Heckel 2024 line 516) | `(c_*-o(1)) n/log^3 n` |
+| Low | `[0,0.029155]` | Lean axioms A2+A3+A4 (HP-2023 Lemma 8.1 at α−2, Heckel 2024 Prop 5(b) adapted, threshold gap); see `proof/proof.md` §Regime I. AnalyticalWrapper uses a separate first-moment/Markov argument (see `Erdos625/AnalyticalWrapper.lean`). | `n^{1-ε}−2n^{0.99}` (≥ `n^{1-2ε}` for large n) |
 | Middle | `[0.029155,0.95]` | `proof/source-notes/good-branch-partial-away-from-one-theorem-2026-05-13.md` | polynomial positive gap |
 | Upper | `[0.95,1)` | `proof/source-notes/upper-boundary-r2-integrated-theorem-2026-05-13.md` | `0.001 n/log^3 n-o(n/log^3 n)` |
 
