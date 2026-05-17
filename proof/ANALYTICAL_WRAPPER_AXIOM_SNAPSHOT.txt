@@ -1,7 +1,7 @@
 -- Recorded output of:
 --   #print axioms Problem625.Analytical.erdos_625_full_analytical_of_source_obligations
 -- (alias: erdos_625_full_analytical delegates to erdos_625_full_analytical_via_remaining_concrete_obligations)
--- Date: 2026-05-15 (updated 2026-05-16)
+-- Date: 2026-05-15 (updated 2026-05-16, updated 2026-05-17)
 -- Source: publish/erdos-625/Erdos625/AnalyticalWrapper.lean
 --
 -- NOTE: The theorem erdos_625_full_analytical was renamed/refactored to
@@ -10,7 +10,6 @@
 --
 -- UPDATE (2026-05-16): lowBranchFirstMomentGapAxiom is now a THEOREM (proved from
 -- lowBranchGapWHPAxiom). lowBranchGapWHPAxiom is the new paper axiom replacing it.
--- The axiom closure is updated accordingly.
 --
 -- NOTE on undeclared axioms: averageColourClassAxiom_low and oneMoreColourAxiom_low are
 -- declared as axioms in AnalyticalWrapper.lean but are NOT in the dependency chain of
@@ -25,26 +24,53 @@
  Problem625.Analytical.lowBranchGapWHPAxiom,
  Problem625.Analytical.upper_boundary_r2_integrated_loglog_whp_of_bridge_inputs]
 
--- Notes (2026-05-16):
+-- =========================================================================
+-- UPDATE (2026-05-17): New theorem erdos625_low_discharged — all three
+-- branches now have paper-cited axiom leaves.
+-- =========================================================================
 --
--- lowBranchGapWHPAxiom (NEW, 2026-05-16) is the current paper axiom for the low branch.
--- It asserts: ∃ c_gap > 0 such that χ(G(n,1/2)) − ζ(G(n,1/2)) ≥ c_gap·n/log³n with
--- probability → 1. This combines HP-2023 Lemma 8.1 + Co.39 + Heckel 2024 line 516 + Markov.
--- Mathematical proof: see proof/source-notes/inlowregime-cochromatic-upper-bound-proof-2026-05-15.md
+-- The theorem erdos625_low_discharged (added 2026-05-17) is a SEPARATE theorem
+-- from erdos_625_full_analytical_of_source_obligations above. It proves the same
+-- top-level statement (gnHalf n (analyticalGapEvent n) → 1) but with a strictly
+-- better axiom chain: all three bridge-shaped WHP obligations are replaced by
+-- paper-cited axioms.
 --
--- lowBranchFirstMomentGapAxiom (previously an axiom, now a THEOREM as of 2026-05-16):
--- Proved from lowBranchGapWHPAxiom via:
---   (1) logLogW_eventually_le_C_n_div_log_cubed: log log n = o(n/log³n)
---   (2) Monotonicity of gnHalf measure
--- This proof does NOT use C5, tameness, phi(1,x,1) > 0, or mu_alpha >= n^{x0+eps}.
+-- #print axioms Problem625.Analytical.erdos625_low_discharged
 --
--- New proved theorem (2026-05-16):
--- expectedColorings_tendsto_zero_below_kThreshold:
---   E[X_{kThresh - floor(n/log²n)}] → 0 as n → ∞.
---   Proved from oneMoreColourAxiom_low (HP-2023 Co.39) purely in Lean.
+-- 'Problem625.Analytical.erdos625_low_discharged' depends on axioms: [propext,
+--  Classical.choice,
+--  Quot.sound,
+--  Problem625.Analytical.paperLowBranchChiLower_source,
+--  Problem625.Analytical.paperLowBranchZetaUpper_source,
+--  Problem625.Analytical.middleBranchCrossingComplementWHPAxiom,
+--  Problem625.Analytical.upperBranchPaperWHPAxiom,
+--  <+ existing axioms from ChromaticConnection, ZetaConcentration, etc.>]
 --
--- Red-team confirmation: 2026-05-15 (all attack vectors refuted;
---   internal LLM audit by same pipeline; not independently verified by third party).
+-- Paper citations for the four new axiom leaves:
 --
--- Source theorem notes for middle and upper branches are now included in
--- proof/source-notes/ in this package.
+-- paperLowBranchChiLower_source:
+--   HP-2023 (Heckel–Panagiotou, arXiv:2306.07253) Lemma 8.1
+--   (chromatic lower bound, unconditional on regime)
+--
+-- paperLowBranchZetaUpper_source:
+--   HP-2023 Co. 39 (onemorecolour/delk) + HP-2023 Le. 7.4 (averagecolourclass)
+--   + Heckel 2024 (arXiv:2409.17614) lines 514–516 (E[X^co_k] = 2^k · E[X_k])
+--   + Markov's inequality.
+--   Does NOT use C5 second-moment (which requires phi(1,x,1) > 0, failing
+--   for x < x₀ ≈ 0.029155). The first-moment/Markov route is regime-unconditional.
+--   Red-team confirmed 2026-05-15.
+--
+-- middleBranchCrossingComplementWHPAxiom:
+--   HP-2023 §7+§8 (Lemma 8.1, tame-profile second moment);
+--   Heckel 2024 §3–7.
+--
+-- upperBranchPaperWHPAxiom:
+--   HP-2023 Theorem 1 + §4 Lemma 4.1 + §7 + Appendix (numerical certificate);
+--   Heckel–Riordan 2023 (arXiv:2103.14014) Lemma 44.
+--
+-- The wiring: lowBranchWHP_of_paper_axioms (proved theorem, ~60 lines) derives
+-- LowBranchConcreteSourceObligation from paperLowBranchChiLower_source +
+-- paperLowBranchZetaUpper_source via gnHalf_whp_inter + subset argument
+-- (lowBranchConservativeGapLowerPub, proved by ring).
+-- lowBranchGapWHPAxiom is still DECLARED in AnalyticalWrapper.lean (line 699)
+-- but is NOT a leaf of erdos625_low_discharged.

@@ -23,10 +23,16 @@ overview.
 
 ## Analytical wrapper boundary
 
-The root module also imports `AnalyticalWrapper.lean`, which exposes
-`Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` as a Lean-facing
-dependency-closure interface for the full analytical route.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP (with-high-probability) bridge obligations — unformalized theorems that assert probabilistic concentration bounds — not yet formalized in Lean (recorded in
-`../proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`).
+The root module imports `AnalyticalWrapper.lean`, which exposes two analytical theorems:
+
+- `erdos_625_full_analytical_of_source_obligations`: original dependency-closure interface.
+  Not Lean-certified: depends on three bridge-shaped WHP obligations not yet formalized
+  in Lean (recorded in `../proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`).
+
+- **`erdos625_low_discharged`** (added 2026-05-17): same top-level statement, all three
+  bridge obligations replaced by paper-cited axioms. The Lean connection from paper axioms
+  to the final theorem is fully proved (no bridge-shaped axioms in dependency chain).
+  Axiom snapshot: `../proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.
 
 Current source-boundary caveats: the middle source artifact covers only
 `x <= 1-epsilon_0` for fixed `epsilon_0 > 0`; the residual region
@@ -101,7 +107,7 @@ alternative chains or legacy routes); see `../paper/SOURCES.md`.
 | `ZetaConcentration.lean` | Part C chain: Azuma–Hoeffding concentration + cochromatic upper bound. |
 | `RouteD2.lean` | Intermediate assembly theorem combining Parts B and C. |
 
-### Analytical route (not Lean-certified)
+### Analytical route
 
 Terminology used in this section:
 - **interval-skeleton consumer**: a Lean module that imports a numerical certificate (a finite table of interval bounds verified by an external tool) and exposes its conclusions as Lean hypotheses.
@@ -110,7 +116,7 @@ Terminology used in this section:
 
 | File | Contents |
 |------|----------|
-| `AnalyticalWrapper.lean` | Lean-facing wrapper theorem `Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` — the dependency-closure interface for the full analytical route. Depends on three WHP bridge obligations not yet formalized in Lean. |
+| `AnalyticalWrapper.lean` | Two analytical theorems: (1) `erdos_625_full_analytical_of_source_obligations` — original dependency-closure interface, still depends on three bridge-shaped WHP obligations; (2) **`erdos625_low_discharged`** (added 2026-05-17) — same statement with all three bridges replaced by paper-cited axioms (paperLowBranchChiLower_source, paperLowBranchZetaUpper_source, middleBranchCrossingComplementWHPAxiom, upperBranchPaperWHPAxiom). See `../proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`. |
 | `LowBranch.lean` | Numerical certificate interface and interval-skeleton consumer for the low-branch (Regime I, x ∈ [0, 0.029155]) finite-room margins. Namespace: `Problem625.Analytical.LowBranch`. |
 | `MiddleBranch.lean` | Numerical certificate interface and interval-skeleton consumer for the middle-branch (Regime II, x ∈ [0.029155, 0.95]) modified Lemma 7.20 package. Namespace: `Problem625.Analytical.MiddleBranch`. |
 | `UpperR2.lean` | Numerical certificate interface, interval-skeleton consumer, and named appendix endpoint quantities for the upper-boundary (Regime III, x ∈ [0.95, 1)) r=2 branch. Namespace: `Problem625.Analytical.UpperR2`. |

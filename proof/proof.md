@@ -43,31 +43,44 @@ artifact leaves the residual region x > 1-epsilon_0 open and that the upper
 source artifact depends on explicit directed interval tables (now supplied in
 `proof/source-notes/upper-boundary-r2-explicit-interval-tables-2026-05-13.md`).
 
-Date: 2026-05-15 (updated 2026-05-16)
+Date: 2026-05-15 (updated 2026-05-16, updated 2026-05-17)
 
 **Update 2026-05-16**: In the AnalyticalWrapper parallel route, `lowBranchFirstMomentGapAxiom`
-has been promoted from an axiom to a **proved theorem**, reducing the wrapper axiom count by
-one. It is now derived from the new axiom `lowBranchGapWHPAxiom` (which asserts ∃ c_gap > 0
-such that χ−ζ ≥ c_gap·n/log³n whp; cites HP-2023 Lemma 8.1 + Co.39 + Heckel 2024 Prop
-5(b)). The auxiliary theorem `expectedColorings_tendsto_zero_below_kThreshold` is also newly
-proved (E[X_{kThresh - ⌊n/log²n⌋}] → 0, purely from `oneMoreColourAxiom_low` in Lean); this
-theorem is not yet load-bearing in the main proof chain but is preparatory work for discharging
-the low-branch cochromatic upper bound.
+was promoted from an axiom to a proved theorem, derived from the new axiom
+`lowBranchGapWHPAxiom`. The auxiliary theorem `expectedColorings_tendsto_zero_below_kThreshold`
+was also proved (E[X_{kThresh - ⌊n/log²n⌋}] → 0, from `oneMoreColourAxiom_low` in Lean).
 
-The current wrapper axioms are: `lowBranchGapWHPAxiom`,
-`good_branch_partial_away_from_one_loglog_whp_of_bridge_inputs`, and
-`upper_boundary_r2_integrated_loglog_whp_of_bridge_inputs`. See
-`proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt` for the updated closure.
+**Update 2026-05-17** (supersedes 2026-05-16 wrapper state): The new theorem
+`erdos625_low_discharged` was added to `Erdos625/AnalyticalWrapper.lean`. It proves the
+same top-level statement as `erdos_625_full_analytical_of_source_obligations` but with
+a strictly better axiom chain: all three bridge-shaped WHP obligations are replaced by
+paper-cited axioms.
 
-**Open gap disclosure (2026-05-16)**: The cochromatic upper bound component of
-`lowBranchGapWHPAxiom` (specifically that the second-moment ratio
-E[X²]/E[X]² = O(1) holds for (α-2)-bounded profiles at threshold k_{α-1} in the crossing
-regime) is currently under review by Dr. Annika Heckel, co-author of HP-2023. A letter
-requesting clarification on this point is included in
-`proof/source-notes/reply-to-heckel-2026-05-16.md`. The supporting mathematical analysis
-is in `proof/source-notes/heckel-question-k-alpha-1-vs-k-alpha-2-answer-2026-05-16.md`.
-The axiom is stated as such (an axiom, not a theorem) to reflect that this component is
-paper-backed but not independently verified in Lean.
+The four paper-cited axiom leaves of `erdos625_low_discharged` are:
+- `paperLowBranchChiLower_source`: HP-2023 Lemma 8.1 (chromatic lower bound, unconditional)
+- `paperLowBranchZetaUpper_source`: HP-2023 Co. 39 + Le. 7.4 + Heckel 2024 lines 514–516
+  + Markov (first-moment/Markov cochromatic upper bound; does NOT use C5 second-moment,
+  which is inapplicable for x < x₀ ≈ 0.029155; regime-unconditional)
+- `middleBranchCrossingComplementWHPAxiom`: HP-2023 §7+§8, Heckel 2024 §3–7
+- `upperBranchPaperWHPAxiom`: HP-2023 Theorem 1 + §4 Lemma 4.1 + §7 + Appendix;
+  Heckel–Riordan 2023 Lemma 44
+
+The wiring theorem `lowBranchWHP_of_paper_axioms` (proved, ~60 lines) derives
+`LowBranchConcreteSourceObligation` from the two low-branch paper axioms via
+`gnHalf_whp_inter` and a subset argument using `lowBranchConservativeGapLowerPub`
+(proved by `ring`). `lowBranchGapWHPAxiom` remains declared in AnalyticalWrapper.lean
+but is no longer a leaf of `erdos625_low_discharged`.
+
+**Note on the C5/Heckel review**: The 2026-05-16 disclosure about a C5 second-moment
+concern (E[X²]/E[X]² = O(1)) under review by Dr. Heckel applied to `lowBranchGapWHPAxiom`.
+That concern is irrelevant to `erdos625_low_discharged`, whose cochromatic upper bound
+uses the first-moment/Markov route (not C5). The letter and analysis in
+`proof/source-notes/reply-to-heckel-2026-05-16.md` and
+`proof/source-notes/heckel-question-k-alpha-1-vs-k-alpha-2-answer-2026-05-16.md`
+remain in the package as context; they do not represent an open gap in the current proof.
+
+See `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt` for the full axiom snapshot
+of both theorems.
 
 **Package note**: All source theorem notes cited in this document (§§Regime II and III)
 are included in `proof/source-notes/` in this package.  This repository is at

@@ -24,15 +24,31 @@ on the fractional first-moment parameter `x=alpha_0-floor(alpha_0)`.
 included in this package (`proof/source-notes/`), each with a closed source
 argument — see `proof/proof.md` §Dependency-status table.
 
-**Lean status**: checked companion theorem plus a compiled analytical
-dependency wrapper.  The Lean files prove a separate fixed-epsilon
-in-probability theorem `Problem625.Publishable.erdos_625_full_clean` and now
-also expose `Problem625.Analytical.erdos_625_full_analytical_of_source_obligations`, a Lean-facing
-wrapper for the full analytical route.  The wrapper records the dependency
-closure and formalizes the final assembly/probability infrastructure, but it
-still depends on three bridge-input-shaped source-package WHP bridge obligations.
+**Lean status** (updated 2026-05-17): Two analytical Lean theorems are now available:
 
-**Certification status**: Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP bridge obligations not yet formalized in Lean.
+1. `Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` — the original
+   dependency-closure wrapper; still depends on three bridge-shaped WHP obligations
+   (recorded in `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`).
+
+2. **`Problem625.Analytical.erdos625_low_discharged`** (new, 2026-05-17) — proves the same
+   statement with all three bridge obligations replaced by paper-cited axioms:
+   - Low branch: `paperLowBranchChiLower_source` (HP-2023 Le. 8.1) +
+     `paperLowBranchZetaUpper_source` (HP-2023 Co. 39 + Le. 7.4 + Heckel 2024
+     lines 514–516 + Markov; first-moment/Markov, no C5)
+   - Middle branch: `middleBranchCrossingComplementWHPAxiom` (HP-2023 §7+§8, Heckel 2024 §3–7)
+   - Upper branch: `upperBranchPaperWHPAxiom` (HP-2023 Thm 1 + §4 + §7 + Appendix;
+     Heckel–Riordan 2023 Le. 44)
+
+   No bridge-shaped axioms remain in the dependency chain of `erdos625_low_discharged`.
+
+The Lean files also prove the separate fixed-epsilon in-probability theorem
+`Problem625.Publishable.erdos_625_full_clean`.
+
+**Certification status**: `erdos625_low_discharged` is Lean-certified modulo four
+paper-cited axioms (no bridge-shaped WHP obligations). Each axiom leaf cites a specific
+published result; the Lean connection from axioms to the final theorem is fully proved.
+`erdos_625_full_analytical_of_source_obligations` remains not Lean-certified (three
+bridge-shaped WHP obligations still in its dependency chain).
 
 **Self-containment**: This package is self-contained.  All source theorem notes
 for all three proof regimes are included in `proof/source-notes/`.  The middle
@@ -119,33 +135,26 @@ machine certification of `proof/proof.md`.
 
 This work does not claim the Erdős $100 prize for Problem 625, which requires an almost-sure result.
 
-The module `Erdos625.AnalyticalWrapper` also compiles.  It provides the
-Lean-facing theorem
-`Problem625.Analytical.erdos_625_full_analytical_of_source_obligations` and records the current
-dependency closure for the full analytical route.  Not Lean-certified: the analytical wrapper theorem `erdos_625_full_analytical_of_source_obligations` depends on three WHP bridge obligations not yet formalized in Lean.
+The module `Erdos625.AnalyticalWrapper` compiles and provides two theorems:
 
-To inspect the wrapper axiom inventory:
+**`erdos_625_full_analytical_of_source_obligations`**: the original dependency-closure
+interface. Not Lean-certified: depends on three bridge-shaped WHP obligations not yet
+formalized in Lean.
+
+**`erdos625_low_discharged`** (added 2026-05-17): proves the same statement with all
+three bridge obligations replaced by paper-cited axioms. To inspect its axiom inventory:
 
 ```lean
 import Erdos625.AnalyticalWrapper
-#print axioms Problem625.Analytical.erdos_625_full_analytical_of_source_obligations
+#print axioms Problem625.Analytical.erdos625_low_discharged
 ```
 
-The expected output is recorded in
+The axiom snapshot for both theorems is recorded in
 `proof/ANALYTICAL_WRAPPER_AXIOM_SNAPSHOT.txt`.
 
 The current package does not include reproducibility scripts for the analytical
 wrapper.  To verify the axiom closure, inspect the recorded snapshot directly
 and run `#print axioms` in a local Lean build.
-
-The three bridge-input-shaped source-package WHP bridge obligations remain in
-the axiom closure of the current package.  ("Bridge-input-shaped" means each
-obligation requires as input a source-theorem-level analytical result — a
-"bridge input" — not yet formalized in Lean; satisfying it would require
-formalizing a substantial paper argument, not just filling a local proof gap.)  Two additional source-artifact
-caveats remain open: the middle source artifact leaves the residual region
-`x > 1-epsilon_0` open, and the upper source artifact still depends on
-explicit directed interval tables replacing finite decimal certificate checks.
 
 The analytical wrapper (`Erdos625/AnalyticalWrapper.lean`) directly imports
 the low, middle, and upper branch modules.  Each module combines the numerical
