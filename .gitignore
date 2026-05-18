@@ -18,3 +18,5 @@ __pycache__/
 # These are work-product files from the parent Erdosreshala repo that
 # should never be committed here.
 *-1029-*.md
+proof/critique-*.md
+work/

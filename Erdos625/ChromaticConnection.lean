@@ -107,6 +107,178 @@ private lemma properColoringExists_card_fin (n : ℕ) (G : SimpleGraph (Fin n)) 
   intro u v hadj huv
   exact G.ne_of_adj hadj huv
 
+/-- Recolor a proper coloring by splitting the vertices in `R` into singleton
+new colors and leaving all other vertices in their old colors. -/
+private noncomputable def recolorWithSingletonSet
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) :
+    Fin n → Fin (k + R.card) :=
+  fun x =>
+    if hx : x ∈ R then
+      Fin.natAdd k (R.equivFin ⟨x, hx⟩)
+    else
+      Fin.castAdd R.card (π x)
+
+private lemma recolorWithSingletonSet_eq_castAdd_of_not_mem
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n)
+    (hx : x ∉ R) :
+    recolorWithSingletonSet π R x = Fin.castAdd R.card (π x) := by
+  simp [recolorWithSingletonSet, hx]
+
+private lemma recolorWithSingletonSet_eq_natAdd_of_mem
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n)
+    (hx : x ∈ R) :
+    recolorWithSingletonSet π R x = Fin.natAdd k (R.equivFin ⟨x, hx⟩) := by
+  simp [recolorWithSingletonSet, hx]
+
+private lemma not_mem_of_recolorWithSingletonSet_eq_castAdd
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n) (i : Fin k)
+    (hx : recolorWithSingletonSet π R x = Fin.castAdd R.card i) :
+    x ∉ R := by
+  intro hxmem
+  have hval : (recolorWithSingletonSet π R x).val = (Fin.castAdd R.card i).val :=
+    congrArg Fin.val hx
+  simp [recolorWithSingletonSet, hxmem] at hval
+  omega
+
+private lemma pi_eq_of_recolorWithSingletonSet_eq_castAdd
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n) (i : Fin k)
+    (hx : recolorWithSingletonSet π R x = Fin.castAdd R.card i) :
+    π x = i := by
+  have hxmem : x ∉ R := not_mem_of_recolorWithSingletonSet_eq_castAdd π R x i hx
+  have : Fin.castAdd R.card (π x) = Fin.castAdd R.card i := by
+    simpa [recolorWithSingletonSet, hxmem] using hx
+  exact Fin.castAdd_injective _ _ this
+
+private lemma mem_of_recolorWithSingletonSet_eq_natAdd
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n) (j : Fin R.card)
+    (hx : recolorWithSingletonSet π R x = Fin.natAdd k j) :
+    x ∈ R := by
+  by_contra hxmem
+  have hval : (recolorWithSingletonSet π R x).val = (Fin.natAdd k j).val :=
+    congrArg Fin.val hx
+  simp [recolorWithSingletonSet, hxmem] at hval
+  omega
+
+private lemma equivFin_eq_of_recolorWithSingletonSet_eq_natAdd
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (x : Fin n) (j : Fin R.card)
+    (hx : recolorWithSingletonSet π R x = Fin.natAdd k j) :
+    R.equivFin ⟨x, mem_of_recolorWithSingletonSet_eq_natAdd π R x j hx⟩ = j := by
+  have hxmem : x ∈ R := mem_of_recolorWithSingletonSet_eq_natAdd π R x j hx
+  have : Fin.natAdd k (R.equivFin ⟨x, hxmem⟩) = Fin.natAdd k j := by
+    simpa [recolorWithSingletonSet, hxmem] using hx
+  exact Fin.natAdd_injective _ _ this
+
+private lemma recolorWithSingletonSet_isProperColoring
+    {n k : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k) (R : Finset (Fin n))
+    (hπ : IsProperColoring G k π) :
+    IsProperColoring G (k + R.card) (recolorWithSingletonSet π R) := by
+  intro u v hadj huv
+  by_cases hu : u ∈ R
+  · by_cases hv : v ∈ R
+    · have huj : recolorWithSingletonSet π R u = Fin.natAdd k (R.equivFin ⟨u, hu⟩) :=
+        recolorWithSingletonSet_eq_natAdd_of_mem π R u hu
+      have hvj : recolorWithSingletonSet π R v = Fin.natAdd k (R.equivFin ⟨v, hv⟩) :=
+        recolorWithSingletonSet_eq_natAdd_of_mem π R v hv
+      have hEq : R.equivFin ⟨u, hu⟩ = R.equivFin ⟨v, hv⟩ := by
+        apply Fin.ext
+        have hval : (Fin.natAdd k (R.equivFin ⟨u, hu⟩)).val =
+            (Fin.natAdd k (R.equivFin ⟨v, hv⟩)).val :=
+          congrArg Fin.val (by simpa [huj, hvj] using huv)
+        simpa using hval
+      have huv' : u = v := congrArg Subtype.val (R.equivFin.injective hEq)
+      exact G.ne_of_adj hadj huv'
+    · have hval : (recolorWithSingletonSet π R u).val =
+          (recolorWithSingletonSet π R v).val := congrArg Fin.val huv
+      rw [recolorWithSingletonSet_eq_natAdd_of_mem π R u hu,
+        recolorWithSingletonSet_eq_castAdd_of_not_mem π R v hv] at hval
+      simp at hval
+      omega
+  · by_cases hv : v ∈ R
+    · have hval : (recolorWithSingletonSet π R u).val =
+          (recolorWithSingletonSet π R v).val := congrArg Fin.val huv
+      rw [recolorWithSingletonSet_eq_castAdd_of_not_mem π R u hu,
+        recolorWithSingletonSet_eq_natAdd_of_mem π R v hv] at hval
+      simp at hval
+      omega
+    · have hEq : Fin.castAdd R.card (π u) = Fin.castAdd R.card (π v) := by
+        simpa [recolorWithSingletonSet_eq_castAdd_of_not_mem π R u hu,
+          recolorWithSingletonSet_eq_castAdd_of_not_mem π R v hv] using huv
+      exact hπ u v hadj (Fin.castAdd_injective _ _ hEq)
+
+private lemma oldFiber_recolorWithSingletonSet_subset_remaining_colorClass
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (i : Fin k) :
+    Finset.univ.filter (fun v => recolorWithSingletonSet π R v = Fin.castAdd R.card i) ⊆
+      Finset.univ.filter (fun v => π v = i ∧ v ∉ R) := by
+  intro x hx
+  have hσ : recolorWithSingletonSet π R x = Fin.castAdd R.card i := by
+    simpa only [Finset.mem_filter, Finset.mem_univ, true_and] using hx
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+  exact ⟨pi_eq_of_recolorWithSingletonSet_eq_castAdd π R x i hσ,
+    not_mem_of_recolorWithSingletonSet_eq_castAdd π R x i hσ⟩
+
+private lemma newFiber_recolorWithSingletonSet_subset_singleton
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (j : Fin R.card) :
+    Finset.univ.filter (fun v => recolorWithSingletonSet π R v = Fin.natAdd k j) ⊆
+      ({(R.equivFin.symm j : Fin n)} : Finset (Fin n)) := by
+  intro x hx
+  have hσ : recolorWithSingletonSet π R x = Fin.natAdd k j := by
+    simpa only [Finset.mem_filter, Finset.mem_univ, true_and] using hx
+  have hxmem : x ∈ R := mem_of_recolorWithSingletonSet_eq_natAdd π R x j hσ
+  have heq : R.equivFin ⟨x, hxmem⟩ = j :=
+    equivFin_eq_of_recolorWithSingletonSet_eq_natAdd π R x j hσ
+  have hsub : (⟨x, hxmem⟩ : ↥R) = R.equivFin.symm j := by
+    apply R.equivFin.injective
+    simpa using heq
+  have hxval : x = R.equivFin.symm j := congrArg Subtype.val hsub
+  simp [hxval]
+
+private lemma recolorWithSingletonSet_oldFiber_card_le
+    {n k t : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n))
+    (hbound : ∀ i : Fin k, (Finset.univ.filter (fun v => π v = i ∧ v ∉ R)).card ≤ t)
+    (i : Fin k) :
+    (Finset.univ.filter (fun v => recolorWithSingletonSet π R v =
+      Fin.castAdd R.card i)).card ≤ t := by
+  exact (Finset.card_le_card (oldFiber_recolorWithSingletonSet_subset_remaining_colorClass π R i)).trans
+    (hbound i)
+
+private lemma recolorWithSingletonSet_newFiber_card_le_one
+    {n k : ℕ} (π : Fin n → Fin k) (R : Finset (Fin n)) (j : Fin R.card) :
+    (Finset.univ.filter (fun v => recolorWithSingletonSet π R v = Fin.natAdd k j)).card ≤ 1 := by
+  exact le_trans (Finset.card_le_card (newFiber_recolorWithSingletonSet_subset_singleton π R j))
+    (by simp)
+
+/-- Deterministic surplus bridge.  If a proper `k`-coloring has a vertex set `R`
+whose removal leaves every old color class with size at most `t`, then splitting
+the vertices of `R` into singleton colors gives a class-bounded coloring with
+`k + |R|` colors. -/
+theorem classBoundedChromaticNumber_le_of_coloring_with_small_removed_fibers
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k) (R : Finset (Fin n))
+    (ht : 0 < t)
+    (hπ : IsProperColoring G k π)
+    (hbound : ∀ i : Fin k, (Finset.univ.filter (fun v => π v = i ∧ v ∉ R)).card ≤ t) :
+    classBoundedChromaticNumber n t G ≤ k + R.card := by
+  have hσ : IsClassBoundedProperColoring G (k + R.card) t (recolorWithSingletonSet π R) := by
+    constructor
+    · exact recolorWithSingletonSet_isProperColoring G π R hπ
+    · rw [Fin.forall_fin_add]
+      constructor
+      · intro i
+        exact recolorWithSingletonSet_oldFiber_card_le π R hbound i
+      · intro j
+        exact le_trans (recolorWithSingletonSet_newFiber_card_le_one π R j) ht
+  exact Nat.sInf_le ⟨recolorWithSingletonSet π R, hσ⟩
+
+/-- Variant with an explicit upper bound on the removed set. -/
+theorem classBoundedChromaticNumber_le_of_coloring_with_removed_fibers_bound
+    {n k t r : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k) (R : Finset (Fin n))
+    (ht : 0 < t)
+    (hπ : IsProperColoring G k π)
+    (hbound : ∀ i : Fin k, (Finset.univ.filter (fun v => π v = i ∧ v ∉ R)).card ≤ t)
+    (hR : R.card ≤ r) :
+    classBoundedChromaticNumber n t G ≤ k + r := by
+  exact (classBoundedChromaticNumber_le_of_coloring_with_small_removed_fibers G π R ht hπ hbound).trans
+    (Nat.add_le_add_left hR k)
+
 private lemma proper_colorClass_card_le_indepNum
     {n k : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
     (hπ : IsProperColoring G k π) (i : Fin k) :
@@ -603,6 +775,338 @@ private lemma oldFiber_card_le_t
   · rw [oldFiber_eq_colorClass_of_not_large (t := t) π i hi]
     exact non_oversized_color_class_card_le_t (t := t) π i
       ((not_mem_largeColors_iff (t := t) π i).mp hi)
+
+private lemma remaining_colorClass_after_largeColorReps_card_le_t
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
+    (hπ : IsProperColoring G k π) (ht : G.indepNum ≤ t + 1) (i : Fin k) :
+    (Finset.univ.filter
+      (fun v : Fin n => π v = i ∧ v ∉ largeColorReps (t := t) π)).card ≤ t := by
+  by_cases hi : i ∈ largeColors (t := t) π
+  · have hsubset :
+        Finset.univ.filter
+          (fun v : Fin n => π v = i ∧ v ∉ largeColorReps (t := t) π) ⊆
+        (Finset.univ.filter (fun v : Fin n => π v = i)).erase
+          (choose_large_color_rep (t := t) π i ((mem_largeColors_iff (t := t) π i).mp hi)) := by
+      intro x hx
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_erase] at hx ⊢
+      refine ⟨?_, hx.1⟩
+      intro hxeq
+      exact hx.2 (by
+        rw [hxeq]
+        exact choose_large_color_rep_mem_largeColorReps (t := t) π i
+          ((mem_largeColors_iff (t := t) π i).mp hi))
+    exact (Finset.card_le_card hsubset).trans
+      (oversized_color_class_erase_rep_card_le_t (t := t) G π hπ ht i
+        ((mem_largeColors_iff (t := t) π i).mp hi))
+  · have hsubset :
+        Finset.univ.filter
+          (fun v : Fin n => π v = i ∧ v ∉ largeColorReps (t := t) π) ⊆
+        Finset.univ.filter (fun v : Fin n => π v = i) := by
+      intro x hx
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hx ⊢
+      exact hx.1
+    exact (Finset.card_le_card hsubset).trans
+      (non_oversized_color_class_card_le_t (t := t) π i
+        ((not_mem_largeColors_iff (t := t) π i).mp hi))
+
+/--
+Compatibility theorem for the explicit removed-vertex seam: under the older
+`α(G) ≤ t + 1` hypothesis, removing one representative from each oversized
+color class leaves all old classes of size at most `t`; the removed set is
+bounded by `maxIndepSetCount G`.
+-/
+theorem exists_removed_fibers_certificate_of_indepNum_le
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
+    (hπ : IsProperColoring G k π) (ht : G.indepNum ≤ t + 1) :
+    ∃ R : Finset (Fin n),
+      R.card ≤ maxIndepSetCount G ∧
+      ∀ i : Fin k,
+        (Finset.univ.filter (fun v : Fin n => π v = i ∧ v ∉ R)).card ≤ t := by
+  refine ⟨largeColorReps (t := t) π, ?_, ?_⟩
+  · rw [largeColorReps_card_eq_largeColors_card (t := t) π]
+    exact large_color_classes_card_le_maxIndepSetCount (t := t) G π hπ ht
+  · exact remaining_colorClass_after_largeColorReps_card_le_t (t := t) G π hπ ht
+
+/-- The surplus of a color class above the threshold `t`. -/
+noncomputable def colorClassSurplus
+    {n k : ℕ} (π : Fin n → Fin k) (t : ℕ) (i : Fin k) : ℕ :=
+  (Finset.univ.filter (fun v : Fin n => π v = i)).card - t
+
+/-- Total surplus of a coloring above the threshold `t`. -/
+noncomputable def coloringSurplus
+    {n k : ℕ} (π : Fin n → Fin k) (t : ℕ) : ℕ :=
+  ∑ i : Fin k, colorClassSurplus π t i
+
+/-- The deficit of a color class below the threshold `t`. -/
+noncomputable def colorClassDeficit
+    {n k : ℕ} (π : Fin n → Fin k) (t : ℕ) (i : Fin k) : ℕ :=
+  t - (Finset.univ.filter (fun v : Fin n => π v = i)).card
+
+/-- Total deficit of a coloring below the threshold `t`. -/
+noncomputable def coloringDeficit
+    {n k : ℕ} (π : Fin n → Fin k) (t : ℕ) : ℕ :=
+  ∑ i : Fin k, colorClassDeficit π t i
+
+/--
+Signed total imbalance of a coloring relative to the target class size `t`.
+
+This integer version is the algebraically clean object behind the surplus /
+deficit split.
+-/
+noncomputable def coloringSignedImbalance
+    {n k : ℕ} (π : Fin n → Fin k) (t : ℕ) : ℤ :=
+  ∑ i : Fin k,
+    (((Finset.univ.filter (fun v : Fin n => π v = i)).card : ℤ) - (t : ℤ))
+
+/-- The color-class fibers of any coloring partition the vertex set. -/
+theorem sum_colorClass_card_eq
+    {n k : ℕ} (π : Fin n → Fin k) :
+    (∑ i : Fin k,
+      (Finset.univ.filter (fun v : Fin n => π v = i)).card) = n := by
+  classical
+  have hmaps :
+      Set.MapsTo π (↑(Finset.univ : Finset (Fin n)))
+        (↑(Finset.univ : Finset (Fin k))) := by
+    intro v hv
+    simp
+  have h :=
+    Finset.card_eq_sum_card_fiberwise
+      (f := π) (s := (Finset.univ : Finset (Fin n)))
+      (t := (Finset.univ : Finset (Fin k))) hmaps
+  simpa using h.symm
+
+/-- The signed imbalance is exactly `n - k * t`. -/
+theorem coloringSignedImbalance_eq
+    {n k t : ℕ} (π : Fin n → Fin k) :
+    coloringSignedImbalance π t = (n : ℤ) - (k : ℤ) * (t : ℤ) := by
+  classical
+  have hsum_nat := sum_colorClass_card_eq (n := n) (k := k) π
+  have hsum_int :
+      (∑ i : Fin k,
+        ((Finset.univ.filter (fun v : Fin n => π v = i)).card : ℤ)) = (n : ℤ) := by
+    exact_mod_cast hsum_nat
+  calc
+    coloringSignedImbalance π t
+        = (∑ i : Fin k,
+            ((Finset.univ.filter (fun v : Fin n => π v = i)).card : ℤ)) -
+          (∑ i : Fin k, (t : ℤ)) := by
+            simp [coloringSignedImbalance, Finset.sum_sub_distrib]
+    _ = (n : ℤ) - (k : ℤ) * (t : ℤ) := by
+            simp [hsum_int]
+
+/-- If every color class has size at most `t`, the total surplus is zero. -/
+theorem coloringSurplus_eq_zero_of_colorClass_card_le
+    {n k t : ℕ} (π : Fin n → Fin k)
+    (hclasses :
+      ∀ i : Fin k,
+        (Finset.univ.filter (fun v : Fin n => π v = i)).card ≤ t) :
+    coloringSurplus π t = 0 := by
+  classical
+  rw [coloringSurplus]
+  apply Finset.sum_eq_zero
+  intro i hi
+  simp [colorClassSurplus, Nat.sub_eq_zero_of_le (hclasses i)]
+
+private lemma int_nat_surplus_sub_deficit
+    (a t : ℕ) :
+    ((a - t : ℕ) : ℤ) - ((t - a : ℕ) : ℤ) = (a : ℤ) - (t : ℤ) := by
+  by_cases hta : t ≤ a
+  · have hat_zero : t - a = 0 := Nat.sub_eq_zero_of_le hta
+    simp [hat_zero, Int.ofNat_sub hta]
+  · have hat : a ≤ t := Nat.le_of_not_ge hta
+    have hta_zero : a - t = 0 := Nat.sub_eq_zero_of_le hat
+    simp [hta_zero, Int.ofNat_sub hat]
+
+/--
+Surplus minus deficit recovers the signed imbalance.  This is the deterministic
+balance identity behind the next probabilistic frontier: bounding surplus can
+be replaced by bounding deficit plus the global `n - k*t` imbalance.
+-/
+theorem coloringSurplus_sub_coloringDeficit_eq_signedImbalance
+    {n k t : ℕ} (π : Fin n → Fin k) :
+    (coloringSurplus π t : ℤ) - (coloringDeficit π t : ℤ) =
+      coloringSignedImbalance π t := by
+  classical
+  rw [coloringSurplus, coloringDeficit, coloringSignedImbalance]
+  calc
+    ((∑ i : Fin k, colorClassSurplus π t i : ℕ) : ℤ) -
+        ((∑ i : Fin k, colorClassDeficit π t i : ℕ) : ℤ)
+        = (∑ i : Fin k, (colorClassSurplus π t i : ℤ)) -
+          (∑ i : Fin k, (colorClassDeficit π t i : ℤ)) := by
+            simp
+    _ = ∑ i : Fin k,
+          ((colorClassSurplus π t i : ℤ) -
+            (colorClassDeficit π t i : ℤ)) := by
+            rw [Finset.sum_sub_distrib]
+    _ = ∑ i : Fin k,
+          (((Finset.univ.filter (fun v : Fin n => π v = i)).card : ℤ) -
+            (t : ℤ)) := by
+            apply Finset.sum_congr rfl
+            intro i hi
+            simp [colorClassSurplus, colorClassDeficit,
+              int_nat_surplus_sub_deficit]
+
+/--
+If every color class has size at most `t`, the total deficit is exactly the
+product slack `k*t - n`.
+-/
+theorem coloringDeficit_eq_product_sub_of_colorClass_card_le
+    {n k t : ℕ} (π : Fin n → Fin k)
+    (hclasses :
+      ∀ i : Fin k,
+        (Finset.univ.filter (fun v : Fin n => π v = i)).card ≤ t) :
+    coloringDeficit π t = k * t - n := by
+  have hsurplus_zero :
+      coloringSurplus π t = 0 :=
+    coloringSurplus_eq_zero_of_colorClass_card_le π hclasses
+  have hbalance :=
+    coloringSurplus_sub_coloringDeficit_eq_signedImbalance (n := n) (k := k) (t := t) π
+  rw [hsurplus_zero, coloringSignedImbalance_eq] at hbalance
+  omega
+
+/--
+Integer upper bound form of the balance identity.  It is often easier to prove
+a probabilistic bound on the deficit plus the absolute global imbalance
+`|n - k*t|`; this theorem converts that package into a surplus bound.
+-/
+theorem coloringSurplus_le_deficit_add_abs_imbalance_int
+    {n k t : ℕ} (π : Fin n → Fin k) :
+    (coloringSurplus π t : ℤ) ≤
+      (coloringDeficit π t : ℤ) +
+        (coloringSignedImbalance π t).natAbs := by
+  have h :=
+    coloringSurplus_sub_coloringDeficit_eq_signedImbalance
+      (n := n) (k := k) (t := t) π
+  have hle :
+      (coloringSurplus π t : ℤ) - (coloringDeficit π t : ℤ) ≤
+        ((coloringSignedImbalance π t).natAbs : ℤ) := by
+    simpa [h] using (Int.le_natAbs (a := coloringSignedImbalance π t))
+  simpa [add_comm] using (sub_le_iff_le_add.mp hle)
+
+private theorem int_natAbs_le_of_two_sided_bound
+    {x : ℤ} {B : ℕ} (hlower : -((B : ℤ)) ≤ x) (hupper : x ≤ (B : ℤ)) :
+    x.natAbs ≤ B := by
+  rcases Int.natAbs_eq x with hx | hx
+  · rw [hx] at hupper
+    exact Int.ofNat_le.mp hupper
+  · exact Int.ofNat_le.mp (by
+      have hneg : -((B : ℤ)) ≤ -((x.natAbs : ℤ)) := by
+        rw [hx] at hlower
+        exact hlower
+      exact (neg_le_neg_iff.mp hneg))
+
+/--
+If the product `k*t` lies in an integer window of radius `B` around `n`, then
+the scalar imbalance `|n - k*t|` is at most `B`.
+-/
+theorem scalarImbalance_natAbs_le_of_product_window
+    {n k t B : ℕ}
+    (hlower : (n : ℤ) - (B : ℤ) ≤ (k : ℤ) * (t : ℤ))
+    (hupper : (k : ℤ) * (t : ℤ) ≤ (n : ℤ) + (B : ℤ)) :
+    (((n : ℤ) - (k : ℤ) * (t : ℤ)).natAbs) ≤ B := by
+  apply int_natAbs_le_of_two_sided_bound
+  · linarith
+  · linarith
+
+private lemma exists_removed_subset_for_colorClass
+    {n k t : ℕ} (π : Fin n → Fin k) (i : Fin k) :
+    ∃ Rᵢ : Finset (Fin n),
+      Rᵢ ⊆ Finset.univ.filter (fun v : Fin n => π v = i) ∧
+      Rᵢ.card = colorClassSurplus π t i ∧
+      (Finset.univ.filter (fun v : Fin n => π v = i ∧ v ∉ Rᵢ)).card ≤ t := by
+  let Cᵢ : Finset (Fin n) := Finset.univ.filter (fun v : Fin n => π v = i)
+  by_cases hle : Cᵢ.card ≤ t
+  · refine ⟨∅, by simp [Cᵢ], ?_, ?_⟩
+    · simp [colorClassSurplus, Cᵢ, Nat.sub_eq_zero_of_le hle]
+    · have hsubset :
+          Finset.univ.filter (fun v : Fin n => π v = i ∧ v ∉ (∅ : Finset (Fin n))) ⊆ Cᵢ := by
+        intro v hv
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hv
+        simp [Cᵢ, hv.1]
+      exact (Finset.card_le_card hsubset).trans hle
+  · have ht_le : t ≤ Cᵢ.card := le_of_not_ge hle
+    have hsurp_le : Cᵢ.card - t ≤ Cᵢ.card := Nat.sub_le _ _
+    obtain ⟨Rᵢ, hRsubset, hRcard⟩ := Finset.exists_subset_card_eq hsurp_le
+    refine ⟨Rᵢ, hRsubset, ?_, ?_⟩
+    · simpa [colorClassSurplus, Cᵢ] using hRcard
+    · have hsubset :
+          Finset.univ.filter (fun v : Fin n => π v = i ∧ v ∉ Rᵢ) ⊆ Cᵢ \ Rᵢ := by
+        intro v hv
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hv
+        simp [Cᵢ, hv.1, hv.2]
+      have hcard_sdiff : (Cᵢ \ Rᵢ).card = t := by
+        rw [Finset.card_sdiff_of_subset hRsubset, hRcard]
+        exact Nat.sub_sub_self ht_le
+      exact (Finset.card_le_card hsubset).trans (by rw [hcard_sdiff])
+
+/--
+Per-color surplus certificate: every coloring admits per-color removed sets
+whose total requested local size is exactly `coloringSurplus`, and whose
+removal makes every old color class have size at most `t`.
+
+The actual union can only be smaller than the sum of local removals, so this is
+the deterministic bridge needed by the probabilistic surplus route.
+-/
+theorem exists_per_color_removed_fibers_of_coloringSurplus
+    {n k t : ℕ} (π : Fin n → Fin k) :
+    ∃ ρ : Fin k → Finset (Fin n),
+      (∑ i : Fin k, (ρ i).card) = coloringSurplus π t ∧
+      ∀ i : Fin k,
+        (Finset.univ.filter (fun v : Fin n => π v = i ∧ v ∉ ρ i)).card ≤ t := by
+  classical
+  choose ρ hρsubset hρcard hρbound using
+    (fun i : Fin k => exists_removed_subset_for_colorClass (t := t) π i)
+  refine ⟨ρ, ?_, hρbound⟩
+  calc
+    ∑ i : Fin k, (ρ i).card
+        = ∑ i : Fin k, colorClassSurplus π t i := by
+            exact Finset.sum_congr rfl (fun i _ => hρcard i)
+    _ = coloringSurplus π t := by rfl
+
+private lemma colorClassSurplus_eq_indicator_large_under_indepNum_le
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
+    (hπ : IsProperColoring G k π) (ht : G.indepNum ≤ t + 1) (i : Fin k) :
+    colorClassSurplus π t i =
+      if i ∈ largeColors (t := t) π then 1 else 0 := by
+  by_cases hi : i ∈ largeColors (t := t) π
+  · have hlarge : t < (Finset.univ.filter (fun v : Fin n => π v = i)).card :=
+      (mem_largeColors_iff (t := t) π i).mp hi
+    have hcard :
+        (Finset.univ.filter (fun v : Fin n => π v = i)).card = t + 1 :=
+      proper_colorClass_card_eq_tsucc_of_t_lt (t := t) G π hπ ht i hlarge
+    simp [colorClassSurplus, hcard, hi]
+  · have hnot : ¬ t < (Finset.univ.filter (fun v : Fin n => π v = i)).card :=
+      (not_mem_largeColors_iff (t := t) π i).mp hi
+    have hle : (Finset.univ.filter (fun v : Fin n => π v = i)).card ≤ t :=
+      Nat.le_of_not_gt hnot
+    simp [colorClassSurplus, hi, Nat.sub_eq_zero_of_le hle]
+
+private lemma coloringSurplus_eq_largeColors_card_under_indepNum_le
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
+    (hπ : IsProperColoring G k π) (ht : G.indepNum ≤ t + 1) :
+    coloringSurplus π t = (largeColors (t := t) π).card := by
+  classical
+  rw [coloringSurplus]
+  calc
+    ∑ i : Fin k, colorClassSurplus π t i
+        = ∑ i : Fin k, (if i ∈ largeColors (t := t) π then 1 else 0) := by
+            exact Finset.sum_congr rfl
+              (fun i _ => colorClassSurplus_eq_indicator_large_under_indepNum_le
+                (t := t) G π hπ ht i)
+    _ = (largeColors (t := t) π).card := by
+            simp [largeColors]
+
+/--
+Under the old `α(G) ≤ t + 1` hypothesis, total coloring surplus is controlled
+by the number of maximum independent sets.  This connects the new surplus
+frontier back to the older correction-count route.
+-/
+theorem coloringSurplus_le_maxIndepSetCount_of_indepNum_le
+    {n k t : ℕ} (G : SimpleGraph (Fin n)) (π : Fin n → Fin k)
+    (hπ : IsProperColoring G k π) (ht : G.indepNum ≤ t + 1) :
+    coloringSurplus π t ≤ maxIndepSetCount G := by
+  rw [coloringSurplus_eq_largeColors_card_under_indepNum_le (t := t) G π hπ ht]
+  exact large_color_classes_card_le_maxIndepSetCount (t := t) G π hπ ht
 
 /-- Paper-aligned structural bridge: the class-bounded chromatic number is at most
     the ordinary chromatic number plus the number of maximum independent sets.
